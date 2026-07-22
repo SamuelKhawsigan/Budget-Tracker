@@ -6,6 +6,8 @@ import { TransactionsPage } from "./pages/TransactionsPage";
 import { CategoriesPage } from "./pages/CategoriesPage";
 import { PayeesPage } from "./pages/PayeesPage";
 import { TransferPage } from "./pages/TransferPage";
+import { BudgetsPage } from "./pages/BudgetsPage";
+import { SavingsPage } from "./pages/SavingsPage";
 import "./App.css";
 
 type View =
@@ -13,7 +15,9 @@ type View =
   | { name: "transactions"; accountId: number }
   | { name: "categories" }
   | { name: "payees" }
-  | { name: "transfer" };
+  | { name: "transfer" }
+  | { name: "budgets" }
+  | { name: "savings" };
 
 function App() {
   const [db, setDb] = useState<Database | null>(null);
@@ -75,6 +79,20 @@ function App() {
         >
           Payees
         </button>
+        <button
+          type="button"
+          className={view.name === "budgets" ? "active" : undefined}
+          onClick={() => setView({ name: "budgets" })}
+        >
+          Budgets
+        </button>
+        <button
+          type="button"
+          className={view.name === "savings" ? "active" : undefined}
+          onClick={() => setView({ name: "savings" })}
+        >
+          Savings
+        </button>
       </nav>
 
       {view.name === "accounts" && (
@@ -93,6 +111,8 @@ function App() {
       {view.name === "categories" && <CategoriesPage db={db} />}
       {view.name === "payees" && <PayeesPage db={db} />}
       {view.name === "transfer" && <TransferPage db={db} />}
+      {view.name === "budgets" && <BudgetsPage db={db} />}
+      {view.name === "savings" && <SavingsPage db={db} />}
     </main>
   );
 }

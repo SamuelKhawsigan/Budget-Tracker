@@ -1,0 +1,107 @@
+import type Database from "@tauri-apps/plugin-sql";
+import { getMonthCashSummary } from "./budgets";
+import { createTransfer } from "./transfers";
+import { lastDayOfMonth } from "../lib/month";
+
+export type SweepRule = "net" | "positive";
+
+interface BudgetedCategoryActual {
+  cap: number;
+  spent: number;
+}
+
+async function listBudgetedActuals(db: Database, month: string): Promise<BudgetedCategoryActual[]> {
+  const rows = await db.select<{ amount: number; spent: number }[]>(
+    `SELECT b.amount as amount, COALESCE(-tx.total, 0) as spent
+     FROM budgets b
+     LEFT JOIN (
+       SELECT category_id, SUM(amount) as total
+       FROM transactions
+       WHERE type = 'expense' AND strftime('%Y-%m', date) = ?
+       GROUP BY category_id
+     ) tx ON tx.category_id = b.category_id
+     WHERE b.month = ?`,
+    [month, month],
+  );
+  return rows.map((r) => ({ cap: r.amount, spent: r.spent }));
+}
+
+// 'net' (default): total budgeted minus total spent across budgeted categories.
+// 'positive': sum only the categories that came in under budget — an
+// over-budget category contributes 0 rather than a negative, so it can't eat
+// into another category's surplus. Saves more aggressively than 'net'.
+function computeRawLeftover(actuals: BudgetedCategoryActual[], rule: SweepRule): number {
+  if (rule === "positive") {
+    return actuals.reduce((sum, a) => sum + Math.max(a.cap - a.spent, 0), 0);
+  }
+  return actuals.reduce((sum, a) => sum + (a.cap - a.spent), 0);
+}
+
+export interface ProjectedSavings {
+  rawLeftover: number; // per sweep_rule, before clamping — can be negative
+  availableCash: number; // income - expense this month, across all accounts
+  swept: number; // clamp(rawLeftover, 0, availableCash) — never phantom money
+}
+
+// The clamp is what makes irregular income safe: the raw leftover reflects
+// budgeting discipline only (unbudgeted spending isn't subtracted from it),
+// so availableCash — real income minus ALL spending this month — is the hard
+// ceiling. A lean month sweeps less, or nothing, never money that isn't there.
+export async function getProjectedSavings(
+  db: Database,
+  month: string,
+  rule: SweepRule,
+): Promise<ProjectedSavings> {
+  const [actuals, cash] = await Promise.all([
+    listBudgetedActuals(db, month),
+    getMonthCashSummary(db, month),
+  ]);
+  const rawLeftover = computeRawLeftover(actuals, rule);
+  const swept = Math.max(0, Math.min(rawLeftover, cash.available));
+  return { rawLeftover, availableCash: cash.available, swept };
+}
+
+export interface SavingsSweep {
+  id: number;
+  month: string;
+  amount: number;
+  transfer_id: number;
+}
+
+export async function getSweepForMonth(db: Database, month: string): Promise<SavingsSweep | null> {
+  const rows = await db.select<SavingsSweep[]>("SELECT * FROM savings_sweeps WHERE month = ?", [month]);
+  return rows[0] ?? null;
+}
+
+// Realizes the sweep: writes the linked-pair transfer from the source account
+// into savings, then records the savings_sweeps row tying it to this month.
+// One sweep per month — savings_sweeps.month is UNIQUE.
+export async function closeMonth(
+  db: Database,
+  month: string,
+  fromAccountId: number,
+  toAccountId: number,
+  amount: number,
+): Promise<void> {
+  if (amount <= 0) {
+    throw new Error("Nothing to sweep this month");
+  }
+  const existing = await getSweepForMonth(db, month);
+  if (existing) {
+    throw new Error(`${month} has already been swept`);
+  }
+
+  const transferId = await createTransfer(db, {
+    fromAccountId,
+    toAccountId,
+    date: lastDayOfMonth(month),
+    amount,
+    notes: `Savings sweep for ${month}`,
+  });
+
+  await db.execute("INSERT INTO savings_sweeps (month, amount, transfer_id) VALUES (?, ?, ?)", [
+    month,
+    amount,
+    transferId,
+  ]);
+}

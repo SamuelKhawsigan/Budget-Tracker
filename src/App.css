@@ -423,6 +423,94 @@ input[type="color"] {
   opacity: 0.5;
 }
 
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.month-label {
+  font-weight: 600;
+  min-width: 10rem;
+  text-align: center;
+}
+
+.cash-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background-color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.cash-summary .positive {
+  color: #2e8b57;
+  font-weight: 700;
+}
+
+.cash-summary .negative {
+  font-weight: 700;
+}
+
+.budget-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.budget-table th,
+.budget-table td {
+  text-align: left;
+  padding: 0.5rem 0.4rem;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.budget-cap-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.budget-cap-cell input {
+  width: 6rem;
+}
+
+.budget-table td.negative {
+  color: #c0392b;
+}
+
+tr.budget-good td:first-child {
+  border-left: 4px solid #2e8b57;
+}
+
+tr.budget-warn td:first-child {
+  border-left: 4px solid #d9a441;
+}
+
+tr.budget-over td:first-child {
+  border-left: 4px solid #c0392b;
+}
+
+tr.budget-none td:first-child {
+  border-left: 4px solid #cccccc;
+}
+
+.sweep-rule-note {
+  font-size: 0.85rem;
+  color: #666;
+  flex-basis: 100%;
+}
+
+.clamp-note {
+  font-size: 0.85rem;
+  color: #b8860b;
+  margin: 0;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;
@@ -431,7 +519,8 @@ input[type="color"] {
 
   .account-form,
   .transaction-form,
-  .inline-form {
+  .inline-form,
+  .cash-summary {
     background-color: #262626;
     border-color: #3a3a3a;
   }
@@ -453,7 +542,9 @@ input[type="color"] {
   .transaction-list th,
   .transaction-list td,
   .payee-list th,
-  .payee-list td {
+  .payee-list td,
+  .budget-table th,
+  .budget-table td {
     border-bottom-color: #3a3a3a;
   }
 
@@ -467,5 +558,17 @@ input[type="color"] {
 
   .transaction-list td.positive {
     color: #4fd18b;
+  }
+
+  .cash-summary .positive {
+    color: #4fd18b;
+  }
+
+  .sweep-rule-note {
+    color: #aaa;
+  }
+
+  .clamp-note {
+    color: #e0b84a;
   }
 }

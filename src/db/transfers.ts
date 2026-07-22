@@ -13,8 +13,9 @@ export interface TransferInput {
 // account, both type='transfer', each pointing at the other via transfer_id.
 // This keeps every account's balance correct from a plain SUM(amount).
 // listTransactions() always excludes type='transfer', so these never show up
-// as income or spending.
-export async function createTransfer(db: Database, input: TransferInput): Promise<void> {
+// as income or spending. Returns the outgoing leg's id — savings_sweeps.transfer_id
+// points at it as "the transfer" for a sweep.
+export async function createTransfer(db: Database, input: TransferInput): Promise<number> {
   const magnitude = Math.abs(input.amount);
 
   const outgoing = await db.execute(
@@ -40,4 +41,6 @@ export async function createTransfer(db: Database, input: TransferInput): Promis
     incoming.lastInsertId,
     outgoingId,
   ]);
+
+  return outgoingId;
 }
