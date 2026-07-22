@@ -91,3 +91,43 @@ export async function updateTransaction(db: Database, id: number, input: Transac
 export async function deleteTransaction(db: Database, id: number): Promise<void> {
   await db.execute("DELETE FROM transactions WHERE id = ?", [id]);
 }
+
+// Hashes already seen for an account, so CSV import review can flag
+// duplicates client-side before anything is written. The unique partial
+// index on import_hash (WHERE import_hash IS NOT NULL) is still the ultimate
+// backstop at insert time.
+export async function getExistingImportHashes(db: Database, accountId: number): Promise<Set<string>> {
+  const rows = await db.select<{ import_hash: string }[]>(
+    "SELECT import_hash FROM transactions WHERE account_id = ? AND import_hash IS NOT NULL",
+    [accountId],
+  );
+  return new Set(rows.map((r) => r.import_hash));
+}
+
+export interface ImportedTransactionInput extends TransactionInput {
+  importHash: string;
+}
+
+export async function createImportedTransaction(
+  db: Database,
+  input: ImportedTransactionInput,
+): Promise<number> {
+  const result = await db.execute(
+    `INSERT INTO transactions (account_id, date, amount, type, category_id, payee_id, notes, import_hash)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      input.accountId,
+      input.date,
+      input.amount,
+      input.type,
+      input.categoryId,
+      input.payeeId,
+      input.notes,
+      input.importHash,
+    ],
+  );
+  if (result.lastInsertId == null) {
+    throw new Error("Insert did not return a row id");
+  }
+  return result.lastInsertId;
+}

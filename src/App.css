@@ -453,7 +453,12 @@ input[type="color"] {
 }
 
 .cash-summary .negative {
+  color: #c0392b;
   font-weight: 700;
+}
+
+tr.archived {
+  opacity: 0.5;
 }
 
 .budget-table {

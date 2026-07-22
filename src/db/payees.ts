@@ -36,6 +36,26 @@ export async function findOrCreatePayee(db: Database, name: string): Promise<num
   return result.lastInsertId;
 }
 
+// Batch lookup for CSV import review: match parsed row descriptions against
+// existing payees (read-only — nothing is created until the import commits)
+// so rows with a payee default_category can be pre-filled.
+export async function findPayeesByNames(db: Database, names: string[]): Promise<Map<string, Payee>> {
+  const unique = Array.from(new Set(names.map((n) => n.trim()).filter(Boolean)));
+  if (unique.length === 0) return new Map();
+
+  const placeholders = unique.map(() => "?").join(",");
+  const rows = await db.select<Payee[]>(
+    `SELECT * FROM payees WHERE is_archived = 0 AND name COLLATE NOCASE IN (${placeholders})`,
+    unique,
+  );
+
+  const map = new Map<string, Payee>();
+  for (const p of rows) {
+    map.set(p.name.toLowerCase(), p);
+  }
+  return map;
+}
+
 export interface PayeeInput {
   name: string;
   defaultCategoryId: number | null;

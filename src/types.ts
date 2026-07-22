@@ -39,3 +39,19 @@ export interface Payee {
   default_category_id: number | null;
   is_archived: number;
 }
+
+// One parsed CSV row on the import review screen, before it's written to
+// transactions (nothing is committed until the user confirms).
+export interface ImportCandidateRow {
+  key: string;
+  date: string;
+  description: string;
+  notes: string | null;
+  amount: number; // signed minor units
+  type: "income" | "expense";
+  categoryId: number | null;
+  importHash: string;
+  isDuplicate: boolean;
+  selected: boolean;
+  parseError: string | null;
+}
