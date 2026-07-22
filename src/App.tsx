@@ -5,13 +5,15 @@ import { AccountsPage } from "./pages/AccountsPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
 import { CategoriesPage } from "./pages/CategoriesPage";
 import { PayeesPage } from "./pages/PayeesPage";
+import { TransferPage } from "./pages/TransferPage";
 import "./App.css";
 
 type View =
   | { name: "accounts" }
   | { name: "transactions"; accountId: number }
   | { name: "categories" }
-  | { name: "payees" };
+  | { name: "payees" }
+  | { name: "transfer" };
 
 function App() {
   const [db, setDb] = useState<Database | null>(null);
@@ -54,6 +56,13 @@ function App() {
         </button>
         <button
           type="button"
+          className={view.name === "transfer" ? "active" : undefined}
+          onClick={() => setView({ name: "transfer" })}
+        >
+          Transfer
+        </button>
+        <button
+          type="button"
           className={view.name === "categories" ? "active" : undefined}
           onClick={() => setView({ name: "categories" })}
         >
@@ -83,6 +92,7 @@ function App() {
       )}
       {view.name === "categories" && <CategoriesPage db={db} />}
       {view.name === "payees" && <PayeesPage db={db} />}
+      {view.name === "transfer" && <TransferPage db={db} />}
     </main>
   );
 }

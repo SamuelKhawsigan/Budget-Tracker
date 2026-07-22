@@ -98,6 +98,12 @@ button {
   margin: 0;
 }
 
+.form-success {
+  color: #2e8b57;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
 .show-archived {
   display: flex;
   align-items: center;

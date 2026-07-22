@@ -59,6 +59,18 @@ export function TransactionForm({
 
   const filteredCategories = categories.filter((c) => c.kind === type);
 
+  // Groups are already ordered by the DB query (group sort_order, then leaf
+  // sort_order), so a simple pass preserves that order for the <optgroup>s.
+  const categoryGroups: { groupName: string; options: CategoryOption[] }[] = [];
+  for (const c of filteredCategories) {
+    const group = categoryGroups.find((g) => g.groupName === c.group_name);
+    if (group) {
+      group.options.push(c);
+    } else {
+      categoryGroups.push({ groupName: c.group_name, options: [c] });
+    }
+  }
+
   // Auto-fill the category from the payee's default_category_id, but only
   // when nothing has been chosen yet — never clobber an explicit selection —
   // and only when that default matches the currently selected income/expense
@@ -168,10 +180,14 @@ export function TransactionForm({
             }
           >
             <option value="">Uncategorized</option>
-            {filteredCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.group_name} / {c.name}
-              </option>
+            {categoryGroups.map((g) => (
+              <optgroup key={g.groupName} label={g.groupName}>
+                {g.options.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>
