@@ -1,5 +1,8 @@
 import { useState, type FormEvent } from "react";
 import type { CategoryLeafInput } from "../db/categories";
+import { ColorSwatchPicker } from "./ColorSwatchPicker";
+import { IconPicker } from "./IconPicker";
+import { categoryPalette } from "../lib/theme";
 
 interface CategoryLeafQuickAddProps {
   groupId: number;
@@ -9,31 +12,23 @@ interface CategoryLeafQuickAddProps {
 
 export function CategoryLeafQuickAdd({ groupId, kind, onSubmit }: CategoryLeafQuickAddProps) {
   const [name, setName] = useState("");
-  const [color, setColor] = useState("#396cd8");
-  const [icon, setIcon] = useState("");
+  const [color, setColor] = useState<string>(categoryPalette[0]);
+  const [icon, setIcon] = useState<string | null>(null);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    void Promise.resolve(
-      onSubmit({ name: name.trim(), parentId: groupId, kind, color, icon: icon.trim() || null }),
-    ).then(() => {
+    void Promise.resolve(onSubmit({ name: name.trim(), parentId: groupId, kind, color, icon })).then(() => {
       setName("");
-      setIcon("");
+      setIcon(null);
     });
   }
 
   return (
     <form className="inline-form leaf-quick-add" onSubmit={handleSubmit}>
       <input value={name} onChange={(e) => setName(e.currentTarget.value)} placeholder="+ Add category" />
-      <input type="color" value={color} onChange={(e) => setColor(e.currentTarget.value)} title="Color" />
-      <input
-        value={icon}
-        onChange={(e) => setIcon(e.currentTarget.value)}
-        placeholder="Icon"
-        maxLength={4}
-        className="icon-input"
-      />
+      <ColorSwatchPicker value={color} onChange={setColor} />
+      <IconPicker value={icon} onChange={setIcon} />
       <button type="submit">Add</button>
     </form>
   );

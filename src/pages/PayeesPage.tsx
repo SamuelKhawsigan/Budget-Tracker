@@ -1,10 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
-import { createPayee, listAllPayees, setPayeeArchived, updatePayee, type PayeeInput } from "../db/payees";
+import {
+  createPayee,
+  deletePayee,
+  getPayeeDependencyInfo,
+  listAllPayees,
+  setPayeeArchived,
+  updatePayee,
+  type PayeeInput,
+} from "../db/payees";
 import { listLeafCategories, type CategoryOption } from "../db/categories";
 import type { Payee } from "../types";
 import { PayeeForm } from "../components/PayeeForm";
 import { PayeeList } from "../components/PayeeList";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useDeleteFlow } from "../lib/useDeleteFlow";
 
 interface PayeesPageProps {
   db: Database;
@@ -16,6 +26,7 @@ export function PayeesPage({ db }: PayeesPageProps) {
   const [showArchived, setShowArchived] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const del = useDeleteFlow(setError);
 
   const refresh = useCallback(async () => {
     setPayees(await listAllPayees(db, showArchived));
@@ -47,6 +58,33 @@ export function PayeesPage({ db }: PayeesPageProps) {
     await refresh();
   }
 
+  async function handleDeleteRequest(id: number) {
+    const payee = payees.find((p) => p.id === id);
+    if (!payee) return;
+    setError(null);
+    const info = await getPayeeDependencyInfo(db, id);
+    del.request({
+      title: "Delete payee",
+      confirmLabel: "Delete payee",
+      message:
+        info.transactionCount > 0 ? (
+          <>
+            Delete <strong>{payee.name}</strong>? Its {info.transactionCount} transaction
+            {info.transactionCount === 1 ? "" : "s"} will be kept but lose this payee.
+          </>
+        ) : (
+          <>
+            Delete <strong>{payee.name}</strong>?
+          </>
+        ),
+      run: async () => {
+        await deletePayee(db, id);
+        if (editingId === id) setEditingId(null);
+        await refresh();
+      },
+    });
+  }
+
   const editingPayee = editingId != null ? payees.find((p) => p.id === editingId) ?? null : null;
 
   return (
@@ -72,7 +110,26 @@ export function PayeesPage({ db }: PayeesPageProps) {
         Show archived payees
       </label>
 
-      <PayeeList payees={payees} categories={categories} onEdit={setEditingId} onArchiveToggle={handleArchiveToggle} />
+      <div className="card">
+        <PayeeList
+          payees={payees}
+          categories={categories}
+          onEdit={setEditingId}
+          onArchiveToggle={handleArchiveToggle}
+          onDelete={handleDeleteRequest}
+        />
+      </div>
+
+      {del.pending && (
+        <ConfirmDialog
+          title={del.pending.title}
+          message={del.pending.message}
+          confirmLabel={del.pending.confirmLabel}
+          busy={del.busy}
+          onConfirm={del.confirm}
+          onCancel={del.cancel}
+        />
+      )}
     </>
   );
 }

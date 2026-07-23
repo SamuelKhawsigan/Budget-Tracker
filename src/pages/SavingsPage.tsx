@@ -6,12 +6,16 @@ import {
   closeMonth,
   getProjectedSavings,
   getSweepForMonth,
+  undoSweep,
   type ProjectedSavings,
   type SavingsSweep,
   type SweepRule,
 } from "../db/savings";
 import { currentMonth, monthLabel, shiftMonth } from "../lib/month";
 import { fromMinorUnits } from "../lib/money";
+import { MonthNav } from "../components/MonthNav";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useDeleteFlow } from "../lib/useDeleteFlow";
 
 interface SavingsPageProps {
   db: Database;
@@ -27,6 +31,7 @@ export function SavingsPage({ db }: SavingsPageProps) {
   const [sourceAccountId, setSourceAccountId] = useState<number | "">("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const del = useDeleteFlow(setError);
 
   const refreshAccounts = useCallback(async () => {
     setAccounts(await listAccounts(db, false));
@@ -93,6 +98,27 @@ export function SavingsPage({ db }: SavingsPageProps) {
     }
   }
 
+  function handleUndoRequest() {
+    if (!existingSweep) return;
+    setError(null);
+    setSuccess(null);
+    del.request({
+      title: "Undo sweep",
+      confirmLabel: "Undo sweep",
+      message: (
+        <>
+          Undo the {monthLabel(month)} sweep? This removes the{" "}
+          <strong>{fromMinorUnits(existingSweep.amount)}</strong> transfer to savings and lets you sweep
+          the month again.
+        </>
+      ),
+      run: async () => {
+        await undoSweep(db, month);
+        await Promise.all([refreshMonth(), refreshAccounts()]);
+      },
+    });
+  }
+
   return (
     <>
       <h1>Savings</h1>
@@ -123,15 +149,7 @@ export function SavingsPage({ db }: SavingsPageProps) {
       {error && <p className="form-error">{error}</p>}
       {success && <p className="form-success">{success}</p>}
 
-      <div className="month-nav">
-        <button type="button" onClick={() => setMonth((m) => shiftMonth(m, -1))}>
-          ← Prev
-        </button>
-        <span className="month-label">{monthLabel(month)}</span>
-        <button type="button" onClick={() => setMonth((m) => shiftMonth(m, 1))}>
-          Next →
-        </button>
-      </div>
+      <MonthNav month={month} onChange={setMonth} shift={shiftMonth} />
 
       {projected && (
         <div className="cash-summary">
@@ -145,9 +163,18 @@ export function SavingsPage({ db }: SavingsPageProps) {
       )}
 
       {existingSweep ? (
-        <p className="empty-state">
-          {monthLabel(month)} already swept — {fromMinorUnits(existingSweep.amount)} recorded.
-        </p>
+        <div className="inline-form swept-notice">
+          <div>
+            <h2>Swept</h2>
+            <p className="empty-state">
+              {monthLabel(month)} swept — <span className="figure">{fromMinorUnits(existingSweep.amount)}</span>{" "}
+              moved to savings.
+            </p>
+          </div>
+          <button type="button" className="btn-danger" onClick={handleUndoRequest}>
+            Undo sweep
+          </button>
+        </div>
       ) : (
         <div className="inline-form">
           <h2>Close month</h2>
@@ -171,12 +198,24 @@ export function SavingsPage({ db }: SavingsPageProps) {
           </label>
           <button
             type="button"
+            className="btn-primary"
             onClick={handleCloseMonth}
             disabled={savingsAccountId === "" || sourceAccountId === "" || !projected || projected.swept <= 0}
           >
             Close month &amp; sweep {projected ? fromMinorUnits(projected.swept) : ""}
           </button>
         </div>
+      )}
+
+      {del.pending && (
+        <ConfirmDialog
+          title={del.pending.title}
+          message={del.pending.message}
+          confirmLabel={del.pending.confirmLabel}
+          busy={del.busy}
+          onConfirm={del.confirm}
+          onCancel={del.cancel}
+        />
       )}
     </>
   );

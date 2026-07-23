@@ -44,3 +44,22 @@ export async function createTransfer(db: Database, input: TransferInput): Promis
 
   return outgoingId;
 }
+
+// Deletes a transfer given ONE of its legs, always removing BOTH legs so a
+// half-transfer can never be left behind. If the transfer happened to back a
+// savings sweep, that savings_sweeps row is removed too (the sweep is undone).
+export async function deleteTransfer(db: Database, legId: number): Promise<void> {
+  const row = await db.select<{ transfer_id: number | null }[]>(
+    "SELECT transfer_id FROM transactions WHERE id = ?",
+    [legId],
+  );
+  if (row.length === 0) return;
+
+  const partnerId = row[0].transfer_id;
+  const legs = partnerId != null ? [legId, partnerId] : [legId];
+  const ph = legs.map(() => "?").join(",");
+
+  await db.execute(`UPDATE transactions SET transfer_id = NULL WHERE id IN (${ph})`, legs);
+  await db.execute(`DELETE FROM savings_sweeps WHERE transfer_id IN (${ph})`, legs);
+  await db.execute(`DELETE FROM transactions WHERE id IN (${ph})`, legs);
+}

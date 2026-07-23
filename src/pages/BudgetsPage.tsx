@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
 import {
+  deleteBudget,
   getMonthCashSummary,
   listCategoryBudgetSummaries,
   setBudget,
@@ -9,6 +10,9 @@ import {
 } from "../db/budgets";
 import { getSetting } from "../db/settings";
 import { BudgetCategoryRow } from "../components/BudgetCategoryRow";
+import { MonthNav } from "../components/MonthNav";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useDeleteFlow } from "../lib/useDeleteFlow";
 import { fromMinorUnits } from "../lib/money";
 import { currentMonth, monthLabel, shiftMonth } from "../lib/month";
 
@@ -22,6 +26,7 @@ export function BudgetsPage({ db }: BudgetsPageProps) {
   const [cash, setCash] = useState<MonthCashSummary | null>(null);
   const [budgetingMode, setBudgetingMode] = useState("available");
   const [error, setError] = useState<string | null>(null);
+  const del = useDeleteFlow(setError);
 
   const refresh = useCallback(async () => {
     const [summary, cashSummary] = await Promise.all([
@@ -50,50 +55,82 @@ export function BudgetsPage({ db }: BudgetsPageProps) {
     }
   }
 
+  function handleDeleteRequest(summary: CategoryBudgetSummary) {
+    setError(null);
+    del.request({
+      title: "Remove budget",
+      confirmLabel: "Remove budget",
+      message: (
+        <>
+          Remove the cap for <strong>{summary.category_name}</strong> in {monthLabel(month)}? Spending
+          history is untouched.
+        </>
+      ),
+      run: async () => {
+        await deleteBudget(db, summary.category_id, month);
+        await refresh();
+      },
+    });
+  }
+
   return (
     <>
       <h1>Budgets</h1>
 
-      <div className="month-nav">
-        <button type="button" onClick={() => setMonth((m) => shiftMonth(m, -1))}>
-          ← Prev
-        </button>
-        <span className="month-label">{monthLabel(month)}</span>
-        <button type="button" onClick={() => setMonth((m) => shiftMonth(m, 1))}>
-          Next →
-        </button>
-      </div>
+      <MonthNav month={month} onChange={setMonth} shift={shiftMonth} />
 
       {error && <p className="form-error">{error}</p>}
 
       {budgetingMode === "available" && cash && (
         <div className="cash-summary">
-          <span>Income: {fromMinorUnits(cash.income)}</span>
-          <span>Spent: {fromMinorUnits(cash.expense)}</span>
+          <span>
+            Income <span className="figure">{fromMinorUnits(cash.income)}</span>
+          </span>
+          <span>
+            Spent <span className="figure">{fromMinorUnits(cash.expense)}</span>
+          </span>
           <span className={cash.available < 0 ? "negative" : "positive"}>
-            Available to budget: {fromMinorUnits(cash.available)}
+            Available to budget <span className="figure">{fromMinorUnits(cash.available)}</span>
           </span>
         </div>
       )}
 
-      {summaries.length === 0 ? (
-        <p className="empty-state">No expense categories yet — add some in Categories.</p>
-      ) : (
-        <table className="budget-table">
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th>Cap</th>
-              <th>Spent</th>
-              <th>Remaining</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summaries.map((s) => (
-              <BudgetCategoryRow key={s.category_id} summary={s} onSave={handleSaveBudget} />
-            ))}
-          </tbody>
-        </table>
+      <div className="card">
+        {summaries.length === 0 ? (
+          <p className="empty-state">No expense categories yet — add some in Categories.</p>
+        ) : (
+          <>
+            <div className="budget-head">
+              <span />
+              <span>Category</span>
+              <span className="budget-num">Cap</span>
+              <span className="budget-num">Spent</span>
+              <span className="budget-num">Remaining</span>
+              <span />
+            </div>
+            <ul className="entity-list">
+              {summaries.map((s) => (
+                <BudgetCategoryRow
+                  key={s.category_id}
+                  summary={s}
+                  onSave={handleSaveBudget}
+                  onDelete={handleDeleteRequest}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+
+      {del.pending && (
+        <ConfirmDialog
+          title={del.pending.title}
+          message={del.pending.message}
+          confirmLabel={del.pending.confirmLabel}
+          busy={del.busy}
+          onConfirm={del.confirm}
+          onCancel={del.cancel}
+        />
       )}
     </>
   );

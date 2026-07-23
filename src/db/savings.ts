@@ -105,3 +105,23 @@ export async function closeMonth(
     transferId,
   ]);
 }
+
+// Undoes a month's sweep: deletes both legs of its transfer and the
+// savings_sweeps row, so the month is free to be swept again. No-op if the
+// month was never swept.
+export async function undoSweep(db: Database, month: string): Promise<void> {
+  const sweep = await getSweepForMonth(db, month);
+  if (!sweep) return;
+
+  // sweep.transfer_id is the outgoing leg; its partner is the incoming leg.
+  const partners = await db.select<{ id: number }[]>(
+    "SELECT id FROM transactions WHERE transfer_id = ?",
+    [sweep.transfer_id],
+  );
+  const legs = [sweep.transfer_id, ...partners.map((p) => p.id)];
+  const ph = legs.map(() => "?").join(",");
+
+  await db.execute(`UPDATE transactions SET transfer_id = NULL WHERE id IN (${ph})`, legs);
+  await db.execute("DELETE FROM savings_sweeps WHERE month = ?", [month]);
+  await db.execute(`DELETE FROM transactions WHERE id IN (${ph})`, legs);
+}

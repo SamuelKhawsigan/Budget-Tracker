@@ -4,6 +4,8 @@ export interface CategoryBudgetSummary {
   category_id: number;
   category_name: string;
   group_name: string;
+  color: string | null;
+  icon: string | null;
   cap: number | null; // minor units; null = no budget row set for this month
   spent: number; // minor units, positive magnitude
 }
@@ -18,6 +20,7 @@ export async function listCategoryBudgetSummaries(
 ): Promise<CategoryBudgetSummary[]> {
   return db.select<CategoryBudgetSummary[]>(
     `SELECT c.id as category_id, c.name as category_name, p.name as group_name,
+            c.color as color, c.icon as icon,
             b.amount as cap,
             COALESCE(-tx.total, 0) as spent
      FROM categories c
@@ -35,6 +38,18 @@ export async function listCategoryBudgetSummaries(
   );
 }
 
+export type BudgetHealth = "good" | "warn" | "over" | "none";
+
+// Shared by the Budgets page's per-row coloring and the Dashboard's
+// budget-health-at-a-glance widget, so the two views can never disagree.
+export function getBudgetHealth(cap: number | null, spent: number): BudgetHealth {
+  if (cap == null || cap <= 0) return spent > 0 ? "over" : "none";
+  const ratio = spent / cap;
+  if (ratio > 1) return "over";
+  if (ratio >= 0.8) return "warn";
+  return "good";
+}
+
 export async function setBudget(
   db: Database,
   categoryId: number,
@@ -46,6 +61,13 @@ export async function setBudget(
      ON CONFLICT(category_id, month) DO UPDATE SET amount = excluded.amount`,
     [categoryId, month, amount],
   );
+}
+
+// A budget row is a leaf with no dependents of its own, so deleting one cap
+// for one month is unconditional. Clears the cap for that category/month;
+// spending history is untouched.
+export async function deleteBudget(db: Database, categoryId: number, month: string): Promise<void> {
+  await db.execute("DELETE FROM budgets WHERE category_id = ? AND month = ?", [categoryId, month]);
 }
 
 export interface MonthCashSummary {

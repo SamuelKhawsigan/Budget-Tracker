@@ -1,14 +1,17 @@
+import { ArchiveRestore, Archive as ArchiveIcon, Pencil, Trash2 } from "lucide-react";
 import type { Payee } from "../types";
 import type { CategoryOption } from "../db/categories";
+import { RowActionButton } from "./RowActionButton";
 
 interface PayeeListProps {
   payees: Payee[];
   categories: CategoryOption[];
   onEdit: (id: number) => void;
   onArchiveToggle: (id: number, archived: boolean) => void;
+  onDelete: (id: number) => void;
 }
 
-export function PayeeList({ payees, categories, onEdit, onArchiveToggle }: PayeeListProps) {
+export function PayeeList({ payees, categories, onEdit, onArchiveToggle, onDelete }: PayeeListProps) {
   if (payees.length === 0) {
     return <p className="empty-state">No payees yet.</p>;
   }
@@ -20,30 +23,24 @@ export function PayeeList({ payees, categories, onEdit, onArchiveToggle }: Payee
   }
 
   return (
-    <table className="payee-list">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Default category</th>
-          <th aria-label="Actions" />
-        </tr>
-      </thead>
-      <tbody>
-        {payees.map((payee) => (
-          <tr key={payee.id} className={payee.is_archived ? "archived" : undefined}>
-            <td>{payee.name}</td>
-            <td>{categoryLabel(payee.default_category_id)}</td>
-            <td className="account-actions">
-              <button type="button" onClick={() => onEdit(payee.id)}>
-                Edit
-              </button>
-              <button type="button" onClick={() => onArchiveToggle(payee.id, !payee.is_archived)}>
-                {payee.is_archived ? "Unarchive" : "Archive"}
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <ul className="entity-list">
+      {payees.map((payee) => (
+        <li key={payee.id} className={"entity-row" + (payee.is_archived ? " archived" : "")}>
+          <div className="entity-row-main">
+            <span className="entity-row-title">{payee.name}</span>
+            <span className="entity-row-meta">{categoryLabel(payee.default_category_id)}</span>
+          </div>
+          <div className="entity-row-actions">
+            <RowActionButton icon={Pencil} label="Edit" onClick={() => onEdit(payee.id)} />
+            <RowActionButton
+              icon={payee.is_archived ? ArchiveRestore : ArchiveIcon}
+              label={payee.is_archived ? "Unarchive" : "Archive"}
+              onClick={() => onArchiveToggle(payee.id, !payee.is_archived)}
+            />
+            <RowActionButton icon={Trash2} label="Delete" danger onClick={() => onDelete(payee.id)} />
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

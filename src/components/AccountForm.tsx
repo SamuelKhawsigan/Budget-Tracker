@@ -56,47 +56,52 @@ export function AccountForm({ initial, onSubmit, onCancel }: AccountFormProps) {
 
       {validationError && <p className="form-error">{validationError}</p>}
 
-      <label>
-        Name
-        <input
-          value={name}
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="e.g. Main Account"
-        />
-      </label>
+      <div className="form-grid-2">
+        <label>
+          Name
+          <input
+            value={name}
+            onChange={(e) => setName(e.currentTarget.value)}
+            placeholder="e.g. Main Account"
+          />
+        </label>
 
-      <label>
-        Type
-        <select value={type} onChange={(e) => setType(e.currentTarget.value as AccountType)}>
-          {ACCOUNT_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </label>
+        <label>
+          Type
+          <select value={type} onChange={(e) => setType(e.currentTarget.value as AccountType)}>
+            {ACCOUNT_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <label>
-        Currency
-        <input
-          value={currency}
-          onChange={(e) => setCurrency(e.currentTarget.value)}
-          maxLength={3}
-        />
-      </label>
+        <label>
+          Currency
+          <input
+            value={currency}
+            onChange={(e) => setCurrency(e.currentTarget.value)}
+            maxLength={3}
+          />
+        </label>
 
-      <label>
-        Opening balance
-        <input
-          value={openingBalanceText}
-          onChange={(e) => setOpeningBalanceText(e.currentTarget.value)}
-          placeholder="0.00"
-          inputMode="decimal"
-        />
-      </label>
+        <label>
+          Opening balance
+          <input
+            className="figure"
+            value={openingBalanceText}
+            onChange={(e) => setOpeningBalanceText(e.currentTarget.value)}
+            placeholder="0.00"
+            inputMode="decimal"
+          />
+        </label>
+      </div>
 
       <div className="account-form-actions">
-        <button type="submit">{initial ? "Save changes" : "Add account"}</button>
+        <button type="submit" className="btn-primary">
+          {initial ? "Save changes" : "Add account"}
+        </button>
         {initial && (
           <button type="button" onClick={onCancel}>
             Cancel

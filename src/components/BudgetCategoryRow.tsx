@@ -1,21 +1,17 @@
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { fromMinorUnits, toMinorUnits } from "../lib/money";
-import type { CategoryBudgetSummary } from "../db/budgets";
+import { getBudgetHealth, type CategoryBudgetSummary } from "../db/budgets";
+import { RowActionButton } from "./RowActionButton";
+import { CategoryIcon } from "./CategoryIcon";
 
 interface BudgetCategoryRowProps {
   summary: CategoryBudgetSummary;
   onSave: (categoryId: number, amount: number) => void | Promise<void>;
+  onDelete: (summary: CategoryBudgetSummary) => void;
 }
 
-function healthClass(cap: number | null, spent: number): string {
-  if (cap == null || cap <= 0) return spent > 0 ? "budget-over" : "budget-none";
-  const ratio = spent / cap;
-  if (ratio > 1) return "budget-over";
-  if (ratio >= 0.8) return "budget-warn";
-  return "budget-good";
-}
-
-export function BudgetCategoryRow({ summary, onSave }: BudgetCategoryRowProps) {
+export function BudgetCategoryRow({ summary, onSave, onDelete }: BudgetCategoryRowProps) {
   const [capText, setCapText] = useState(summary.cap != null ? fromMinorUnits(summary.cap) : "");
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,12 +32,17 @@ export function BudgetCategoryRow({ summary, onSave }: BudgetCategoryRowProps) {
   const remaining = summary.cap != null ? summary.cap - summary.spent : null;
 
   return (
-    <tr className={healthClass(summary.cap, summary.spent)}>
-      <td>
-        {summary.group_name} / {summary.category_name}
-      </td>
-      <td className="budget-cap-cell">
+    <li className={`budget-row budget-${getBudgetHealth(summary.cap, summary.spent)}`}>
+      <span className="budget-tick" />
+      <span className="budget-name">
+        <CategoryIcon category={{ id: summary.category_id, color: summary.color, icon: summary.icon }} size={15} />
+        <span className="budget-name-text">
+          {summary.group_name} / {summary.category_name}
+        </span>
+      </span>
+      <div className="budget-cap-cell">
         <input
+          className="figure"
           value={capText}
           onChange={(e) => {
             setCapText(e.currentTarget.value);
@@ -49,18 +50,24 @@ export function BudgetCategoryRow({ summary, onSave }: BudgetCategoryRowProps) {
           }}
           placeholder="0.00"
           inputMode="decimal"
+          aria-label={`Budget cap for ${summary.category_name}`}
         />
         {dirty && (
-          <button type="button" onClick={handleSave}>
+          <button type="button" className="btn-primary budget-save" onClick={handleSave}>
             Save
           </button>
         )}
-        {error && <span className="form-error">{error}</span>}
-      </td>
-      <td>{fromMinorUnits(summary.spent)}</td>
-      <td className={remaining != null && remaining < 0 ? "negative" : undefined}>
+      </div>
+      <span className="budget-num figure">{fromMinorUnits(summary.spent)}</span>
+      <span className={"budget-num figure" + (remaining != null && remaining < 0 ? " negative" : "")}>
         {remaining != null ? fromMinorUnits(remaining) : "—"}
-      </td>
-    </tr>
+      </span>
+      <span className="budget-row-action">
+        {summary.cap != null && (
+          <RowActionButton icon={Trash2} label="Remove budget" danger onClick={() => onDelete(summary)} />
+        )}
+      </span>
+      {error && <span className="budget-error form-error">{error}</span>}
+    </li>
   );
 }

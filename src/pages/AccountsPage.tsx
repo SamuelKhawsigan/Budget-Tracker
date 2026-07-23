@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
 import {
   createAccount,
+  deleteAccountCascade,
+  getAccountDependencyInfo,
   listAccounts,
   setAccountArchived,
   updateAccount,
@@ -10,6 +12,8 @@ import {
 } from "../db/accounts";
 import { AccountForm } from "../components/AccountForm";
 import { AccountList } from "../components/AccountList";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useDeleteFlow } from "../lib/useDeleteFlow";
 
 interface AccountsPageProps {
   db: Database;
@@ -21,6 +25,7 @@ export function AccountsPage({ db, onSelectAccount }: AccountsPageProps) {
   const [showArchived, setShowArchived] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const del = useDeleteFlow(setError);
 
   const refresh = useCallback(
     async (includeArchived: boolean) => {
@@ -53,6 +58,34 @@ export function AccountsPage({ db, onSelectAccount }: AccountsPageProps) {
     await refresh(showArchived);
   }
 
+  async function handleDeleteRequest(id: number) {
+    const account = accounts.find((a) => a.id === id);
+    if (!account) return;
+    setError(null);
+    const info = await getAccountDependencyInfo(db, id);
+    del.request({
+      title: "Delete account",
+      confirmLabel: "Delete account",
+      message:
+        info.transactionCount > 0 ? (
+          <>
+            Permanently delete <strong>{account.name}</strong> and its {info.transactionCount}{" "}
+            transaction{info.transactionCount === 1 ? "" : "s"}? This can't be undone — archive it instead
+            to keep the history.
+          </>
+        ) : (
+          <>
+            Permanently delete <strong>{account.name}</strong>? This can't be undone.
+          </>
+        ),
+      run: async () => {
+        await deleteAccountCascade(db, id);
+        if (editingId === id) setEditingId(null);
+        await refresh(showArchived);
+      },
+    });
+  }
+
   const editingAccount = editingId != null ? accounts.find((a) => a.id === editingId) ?? null : null;
 
   return (
@@ -77,12 +110,26 @@ export function AccountsPage({ db, onSelectAccount }: AccountsPageProps) {
         Show archived accounts
       </label>
 
-      <AccountList
-        accounts={accounts}
-        onView={onSelectAccount}
-        onEdit={setEditingId}
-        onArchiveToggle={handleArchiveToggle}
-      />
+      <div className="card">
+        <AccountList
+          accounts={accounts}
+          onView={onSelectAccount}
+          onEdit={setEditingId}
+          onArchiveToggle={handleArchiveToggle}
+          onDelete={handleDeleteRequest}
+        />
+      </div>
+
+      {del.pending && (
+        <ConfirmDialog
+          title={del.pending.title}
+          message={del.pending.message}
+          confirmLabel={del.pending.confirmLabel}
+          busy={del.busy}
+          onConfirm={del.confirm}
+          onCancel={del.cancel}
+        />
+      )}
     </>
   );
 }

@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
+import { ArchiveRestore, Archive as ArchiveIcon, Pencil, Trash2 } from "lucide-react";
 import {
   createCategoryGroup,
   createLeafCategory,
+  deleteCategoryCascade,
+  getCategoryDependencyInfo,
   listCategories,
   setCategoryArchived,
   updateCategory,
@@ -14,6 +17,10 @@ import { CategoryGroupForm } from "../components/CategoryGroupForm";
 import { CategoryEditForm } from "../components/CategoryEditForm";
 import { CategoryLeafQuickAdd } from "../components/CategoryLeafQuickAdd";
 import { CategoryRow } from "../components/CategoryRow";
+import { CategoryIcon } from "../components/CategoryIcon";
+import { RowActionButton } from "../components/RowActionButton";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useDeleteFlow } from "../lib/useDeleteFlow";
 
 interface CategoriesPageProps {
   db: Database;
@@ -26,6 +33,7 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
   const [showArchived, setShowArchived] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const del = useDeleteFlow(setError);
 
   const refresh = useCallback(async () => {
     setCategories(await listCategories(db, showArchived));
@@ -88,6 +96,43 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
     await refresh();
   }
 
+  async function handleDeleteRequest(id: number) {
+    const category = categories.find((c) => c.id === id);
+    if (!category) return;
+    setError(null);
+    const info = await getCategoryDependencyInfo(db, id);
+    const reassign =
+      info.transactionCount > 0 ? (
+        <>
+          {" "}
+          Its {info.transactionCount} transaction{info.transactionCount === 1 ? "" : "s"} will move to
+          Uncategorized.
+        </>
+      ) : null;
+    del.request({
+      title: info.isGroup ? "Delete category group" : "Delete category",
+      confirmLabel: "Delete",
+      message: info.isGroup ? (
+        <>
+          Delete <strong>{category.name}</strong>
+          {info.leafCount > 0
+            ? ` and its ${info.leafCount} subcategor${info.leafCount === 1 ? "y" : "ies"}`
+            : ""}
+          ?{reassign}
+        </>
+      ) : (
+        <>
+          Delete <strong>{category.name}</strong>?{reassign}
+        </>
+      ),
+      run: async () => {
+        await deleteCategoryCascade(db, id);
+        if (editingId === id) setEditingId(null);
+        await refresh();
+      },
+    });
+  }
+
   return (
     <>
       <h1>Categories</h1>
@@ -126,21 +171,21 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
                   className={"category-group-block" + (group.is_archived ? " archived" : "")}
                 >
                   <div className="category-row">
-                    <span
-                      className="category-swatch"
-                      style={{ backgroundColor: group.color ?? "#cccccc" }}
-                    />
+                    <CategoryIcon category={group} size={16} />
                     <span className="category-name">{group.name}</span>
                     <span className="category-row-actions">
-                      <button type="button" onClick={() => setEditingId(group.id)}>
-                        Edit
-                      </button>
-                      <button
-                        type="button"
+                      <RowActionButton icon={Pencil} label="Edit" onClick={() => setEditingId(group.id)} />
+                      <RowActionButton
+                        icon={group.is_archived ? ArchiveRestore : ArchiveIcon}
+                        label={group.is_archived ? "Unarchive" : "Archive"}
                         onClick={() => handleArchiveToggle(group.id, !group.is_archived)}
-                      >
-                        {group.is_archived ? "Unarchive" : "Archive"}
-                      </button>
+                      />
+                      <RowActionButton
+                        icon={Trash2}
+                        label="Delete"
+                        danger
+                        onClick={() => handleDeleteRequest(group.id)}
+                      />
                     </span>
                   </div>
                   <ul className="category-leaves">
@@ -151,6 +196,7 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
                         indent
                         onEdit={() => setEditingId(leaf.id)}
                         onArchiveToggle={() => handleArchiveToggle(leaf.id, !leaf.is_archived)}
+                        onDelete={() => handleDeleteRequest(leaf.id)}
                       />
                     ))}
                     <li className="category-leaf">
@@ -162,6 +208,17 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
           </ul>
         </section>
       ))}
+
+      {del.pending && (
+        <ConfirmDialog
+          title={del.pending.title}
+          message={del.pending.message}
+          confirmLabel={del.pending.confirmLabel}
+          busy={del.busy}
+          onConfirm={del.confirm}
+          onCancel={del.cancel}
+        />
+      )}
     </>
   );
 }

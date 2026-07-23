@@ -1,5 +1,8 @@
 import { useState, type FormEvent } from "react";
 import type { CategoryUpdateInput } from "../db/categories";
+import { ColorSwatchPicker } from "./ColorSwatchPicker";
+import { IconPicker } from "./IconPicker";
+import { categoryPalette } from "../lib/theme";
 
 interface CategoryEditFormInitial {
   name: string;
@@ -15,8 +18,8 @@ interface CategoryEditFormProps {
 
 export function CategoryEditForm({ initial, onSubmit, onCancel }: CategoryEditFormProps) {
   const [name, setName] = useState(initial.name);
-  const [color, setColor] = useState(initial.color ?? "#396cd8");
-  const [icon, setIcon] = useState(initial.icon ?? "");
+  const [color, setColor] = useState<string>(initial.color ?? categoryPalette[0]);
+  const [icon, setIcon] = useState<string | null>(initial.icon);
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: FormEvent) {
@@ -26,7 +29,7 @@ export function CategoryEditForm({ initial, onSubmit, onCancel }: CategoryEditFo
       return;
     }
     setError(null);
-    void onSubmit({ name: name.trim(), color, icon: icon.trim() || null });
+    void onSubmit({ name: name.trim(), color, icon });
   }
 
   return (
@@ -34,14 +37,8 @@ export function CategoryEditForm({ initial, onSubmit, onCancel }: CategoryEditFo
       <h2>Edit category</h2>
       {error && <p className="form-error">{error}</p>}
       <input value={name} onChange={(e) => setName(e.currentTarget.value)} placeholder="Name" />
-      <input type="color" value={color} onChange={(e) => setColor(e.currentTarget.value)} title="Color" />
-      <input
-        value={icon}
-        onChange={(e) => setIcon(e.currentTarget.value)}
-        placeholder="Icon (emoji)"
-        maxLength={4}
-        className="icon-input"
-      />
+      <ColorSwatchPicker value={color} onChange={setColor} />
+      <IconPicker value={icon} onChange={setIcon} />
       <button type="submit">Save</button>
       <button type="button" onClick={onCancel}>
         Cancel

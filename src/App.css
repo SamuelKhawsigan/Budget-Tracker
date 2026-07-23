@@ -1,11 +1,38 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  --color-bg: #17150f;
+  --color-surface: #201e16;
+  --color-border: rgba(237, 233, 221, 0.08);
+  --color-text: #ede9dd;
+  --color-text-muted: #9c9686;
+  --color-sage: #9bb07a;
+  --color-terracotta: #ce6a4c;
+  --color-amber: #d8a657;
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-body: "Inter", sans-serif;
+
+  --radius: 8px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  font-family: var(--font-body);
   font-size: 16px;
-  line-height: 24px;
+  line-height: 1.5;
   font-weight: 400;
 
-  color: #0f0f0f;
-  background-color: #f6f6f6;
+  color: var(--color-text);
+  background-color: var(--color-bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -14,47 +41,180 @@
   -webkit-text-size-adjust: 100%;
 }
 
-.container {
-  margin: 0 auto;
-  max-width: 760px;
-  padding: 4vh 1.5rem;
+.figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.positive {
+  color: var(--color-sage);
+}
+
+.negative {
+  color: var(--color-terracotta);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  /* Backstop: focus inside an absolutely-positioned popover (e.g. IconPicker)
+     triggers the browser's implicit scrollIntoView, which walks UP the
+     ancestor chain to the first container it considers "scrollable" — even
+     an `overflow: hidden` one, since hidden still creates a scroll region,
+     just without visible scrollbars. `clip` doesn't create a scroll region
+     at all, so the walk finds nothing to scroll. Every level in the chain
+     (here, .app-shell, .app-content) needs `clip`, not `hidden`, or the
+     walk just lands on the next `hidden` ancestor and the page still shifts. */
+  overflow: clip;
+}
+
+.app-shell {
+  display: flex;
+  height: 100vh;
+  overflow: clip;
+}
+
+.app-shell-unready {
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.app-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  /* clip, not hidden: `hidden` still creates a scrollable region that focus
+     inside an absolutely-positioned popover (e.g. IconPicker) can scroll
+     into view programmatically, shifting the whole page horizontally.
+     `clip` doesn't create a scroll container at all, so there's nothing to
+     scroll to — the popover just renders in place. */
+  overflow-x: clip;
+  padding: var(--space-8) var(--space-8) 4rem var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-6);
 }
 
 h1 {
-  text-align: center;
-  margin-bottom: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.6rem;
+  text-align: left;
+  margin: 0;
+  color: var(--color-text);
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+  margin: 0;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.section-icon {
+  flex: none;
+  color: var(--color-sage);
 }
 
 input,
 select,
 button {
-  border-radius: 8px;
-  border: 1px solid #d4d4d4;
-  padding: 0.5em 0.8em;
-  font-size: 1em;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  padding: 0.55em 0.8em;
+  line-height: 1.2;
+  font-size: 0.95rem;
   font-weight: 500;
-  font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  transition:
+    border-color 0.15s ease-out,
+    background-color 0.15s ease-out;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 0.9rem;
+  text-align: left;
+  color: var(--color-text-muted);
 }
 
 button {
   cursor: pointer;
-  border-color: transparent;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 button:hover {
-  border-color: #396cd8;
+  border-color: var(--color-sage);
 }
 
 button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
+  background-color: rgba(237, 233, 221, 0.06);
+}
+
+.btn-primary {
+  background-color: var(--color-sage);
+  border-color: var(--color-sage);
+  color: var(--color-bg);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background-color: #a8bd8c;
+  border-color: #a8bd8c;
+}
+
+.btn-primary:active {
+  background-color: #94aa76;
+}
+
+.btn-danger {
+  background-color: var(--color-terracotta);
+  border-color: var(--color-terracotta);
+  color: var(--color-bg);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.btn-danger:hover {
+  background-color: #d87e63;
+  border-color: #d87e63;
+}
+
+.btn-danger:active {
+  background-color: #b95c40;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239c9686' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6em center;
+  background-size: 14px;
+  padding-right: 2em;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--color-sage);
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
 }
 
 input,
@@ -63,52 +223,420 @@ button {
   outline: none;
 }
 
-.account-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 1rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background-color: #ffffff;
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  border-color: var(--color-sage);
+  box-shadow: 0 0 0 2px rgba(155, 176, 122, 0.35);
 }
 
-.account-form h2 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.1rem;
+.color-swatch-picker {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
 }
 
-.account-form label {
+.color-swatch {
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+.color-swatch:hover {
+  border-color: var(--color-border);
+}
+
+.color-swatch.selected {
+  border-color: var(--color-text);
+}
+
+.category-icon-glyph {
+  flex: none;
+}
+
+.icon-picker {
+  position: relative;
+  display: inline-block;
+}
+
+.icon-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  padding: 0;
+  color: var(--color-text-muted);
+}
+
+.icon-picker-placeholder {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.icon-picker-popover {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 0.4rem);
+  /* Right-anchored, not left: the trigger is always the second-to-last
+     control in its row (icon picker, then Add/Save), so anchoring from the
+     right and opening leftward keeps the popover inside the row's own
+     width instead of running past the window's right edge. With `clip` (not
+     `hidden`) on the app shell, overflow here would be invisible, not
+     scrolled-to, so this has to actually fit rather than rely on scroll. */
+  right: 0;
+  width: 15rem;
+  max-width: calc(100vw - 3rem);
   display: flex;
   flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(9, 8, 5, 0.4);
+}
+
+.icon-picker-search {
+  width: 100%;
+}
+
+.icon-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 0.25rem;
-  font-size: 0.9rem;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.icon-picker-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 0;
+  color: var(--color-text-muted);
+}
+
+.icon-picker-cell:hover {
+  color: var(--color-sage);
+}
+
+.icon-picker-cell.selected {
+  border-color: var(--color-sage);
+  color: var(--color-sage);
+  background-color: rgba(155, 176, 122, 0.12);
+}
+
+.icon-picker-empty {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: var(--space-2) 0;
+}
+
+.category-picker {
+  position: relative;
+}
+
+.category-picker-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
   text-align: left;
 }
 
+.category-picker-trigger-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-picker-placeholder {
+  color: var(--color-text-muted);
+}
+
+.category-picker-menu {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  right: 0;
+  max-height: 16rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: var(--space-2);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(9, 8, 5, 0.4);
+}
+
+.category-picker-group-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  padding: 0.4rem 0.5rem 0.15rem;
+}
+
+.category-picker-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: none;
+  background: none;
+  box-shadow: none;
+  text-align: left;
+  font-weight: 400;
+}
+
+.category-picker-option:hover {
+  background-color: rgba(237, 233, 221, 0.06);
+  border-color: transparent;
+}
+
+.category-picker-option.selected {
+  color: var(--color-sage);
+  background-color: rgba(155, 176, 122, 0.12);
+}
+
+.account-form,
+.transaction-form,
+.inline-form,
+.cash-summary,
+.summary-card,
+.dashboard-card,
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.card {
+  padding: var(--space-4);
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.entity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.entity-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.entity-row:last-child {
+  border-bottom: none;
+}
+
+.entity-row.archived {
+  opacity: 0.5;
+}
+
+.entity-row-main {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.entity-row-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.entity-row-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.entity-row-value {
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 8rem;
+  text-align: right;
+}
+
+.entity-row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex: none;
+}
+
+.entity-row-actions button,
+.account-actions button {
+  padding: 0.3em 0.7em;
+  font-size: 0.82rem;
+}
+
+.row-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  flex: none;
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  opacity: 0.65;
+  box-shadow: none;
+}
+
+.entity-row:hover .row-icon-btn,
+.category-row:hover .row-icon-btn,
+.row-icon-btn:hover,
+.row-icon-btn:focus-visible {
+  opacity: 1;
+}
+
+.row-icon-btn:hover {
+  color: var(--color-sage);
+  border-color: var(--color-border);
+  background-color: var(--color-bg);
+}
+
+.row-icon-btn.danger:hover {
+  color: var(--color-terracotta);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background-color: rgba(9, 8, 5, 0.6);
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--color-text);
+}
+
+.modal-message {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.modal-message strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.entity-row {
+  transition: background-color 0.15s ease-out;
+}
+
+.entity-row:hover {
+  background-color: rgba(237, 233, 221, 0.03);
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+
 .account-form-actions {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 
 .form-error {
-  color: #c0392b;
+  color: var(--color-terracotta);
   font-size: 0.9rem;
   margin: 0;
 }
 
 .form-success {
-  color: #2e8b57;
+  color: var(--color-sage);
   font-size: 0.9rem;
   margin: 0;
 }
 
 .show-archived {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.9rem;
+  color: var(--color-text-muted);
 }
 
 .account-list {
@@ -119,8 +647,8 @@ button {
 .account-list th,
 .account-list td {
   text-align: left;
-  padding: 0.5rem 0.4rem;
-  border-bottom: 1px solid #eaeaea;
+  padding: var(--space-2) 0.4rem;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .account-list tr.archived {
@@ -128,7 +656,7 @@ button {
 }
 
 .account-list td.negative {
-  color: #c0392b;
+  color: var(--color-terracotta);
 }
 
 .account-actions {
@@ -138,8 +666,14 @@ button {
 }
 
 .empty-state {
-  text-align: center;
-  color: #777;
+  text-align: left;
+  color: var(--color-text-muted);
+}
+
+.loading-state {
+  text-align: left;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
 }
 
 .link-button {
@@ -147,12 +681,13 @@ button {
   background: none;
   box-shadow: none;
   padding: 0;
-  color: #396cd8;
+  color: var(--color-text);
   font-weight: 600;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .link-button:hover {
+  color: var(--color-sage);
   border: none;
 }
 
@@ -162,7 +697,7 @@ button {
   background: none;
   box-shadow: none;
   padding: 0;
-  color: #396cd8;
+  color: var(--color-sage);
   font-weight: 500;
 }
 
@@ -173,14 +708,14 @@ button {
 .transactions-page {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-6);
 }
 
 .page-header {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
+  align-items: flex-start;
+  gap: var(--space-2);
 }
 
 .page-header h1 {
@@ -188,43 +723,32 @@ button {
 }
 
 .account-balance {
-  text-align: center;
-  font-size: 1.4rem;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  font-size: 1.6rem;
   font-weight: 700;
   margin: 0;
 }
 
 .account-balance.negative {
-  color: #c0392b;
+  color: var(--color-terracotta);
 }
 
 .transaction-form {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  padding: 1rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background-color: #ffffff;
-}
-
-.transaction-form h2 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.1rem;
+  gap: var(--space-3);
+  padding: var(--space-4);
 }
 
 .transaction-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.9rem;
-  text-align: left;
   flex: 1;
 }
 
 .transaction-form-row {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .transaction-form-row > label {
@@ -233,13 +757,13 @@ button {
 
 .transaction-form-actions {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 
 .type-toggle {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .type-toggle button {
@@ -247,14 +771,14 @@ button {
 }
 
 .type-toggle button.active {
-  border-color: #396cd8;
-  background-color: #396cd8;
-  color: #ffffff;
+  border-color: var(--color-sage);
+  background-color: var(--color-sage);
+  color: var(--color-bg);
 }
 
 .transaction-filters {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .transaction-filters input {
@@ -274,16 +798,16 @@ button {
 .transaction-list th,
 .transaction-list td {
   text-align: left;
-  padding: 0.5rem 0.4rem;
-  border-bottom: 1px solid #eaeaea;
+  padding: var(--space-2) 0.4rem;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .transaction-list td.negative {
-  color: #c0392b;
+  color: var(--color-terracotta);
 }
 
 .transaction-list td.positive {
-  color: #2e8b57;
+  color: var(--color-sage);
 }
 
 .transaction-actions {
@@ -292,33 +816,94 @@ button {
   justify-content: flex-end;
 }
 
-.main-nav {
+.sidebar {
+  flex: none;
+  width: 232px;
+  height: 100%;
   display: flex;
-  gap: 0.5rem;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-3);
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  overflow-y: auto;
 }
 
-.main-nav button.active {
-  border-color: #396cd8;
-  background-color: #396cd8;
-  color: #ffffff;
+.sidebar-brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0 var(--space-3);
+  color: var(--color-text);
+}
+
+.sidebar-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+}
+
+.sidebar-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.55rem var(--space-3);
+  border: 1px solid transparent;
+  background: none;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-align: left;
+  box-shadow: none;
+}
+
+.sidebar-link:hover {
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.sidebar-link.active {
+  color: var(--color-sage);
+  background-color: rgba(155, 176, 122, 0.12);
+}
+
+.sidebar-link svg {
+  flex: none;
+}
+
+.sidebar-quick-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.6rem var(--space-3);
+  border-color: var(--color-sage);
+  background-color: rgba(155, 176, 122, 0.12);
+  color: var(--color-sage);
+  font-weight: 600;
+}
+
+.sidebar-quick-add:hover {
+  background-color: rgba(155, 176, 122, 0.2);
 }
 
 .inline-form {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background-color: #ffffff;
+  gap: var(--space-2);
+  padding: var(--space-4);
 }
 
 .inline-form h2 {
   width: 100%;
-  margin: 0 0 0.25rem 0;
-  font-size: 1.1rem;
 }
 
 .inline-form input[type="text"],
@@ -332,25 +917,13 @@ button {
   flex: none;
 }
 
-input[type="color"] {
-  padding: 0.2em;
-  width: 2.5rem;
-  flex: none;
-}
-
-.category-section h2 {
-  text-align: left;
-  font-size: 1.05rem;
-  margin: 0 0 0.4rem 0;
-}
-
 .category-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .category-group-block.archived {
@@ -360,7 +933,7 @@ input[type="color"] {
 .category-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.4rem 0;
 }
 
@@ -385,11 +958,11 @@ input[type="color"] {
 .category-leaves {
   list-style: none;
   margin: 0;
-  padding-left: 1.5rem;
+  padding-left: var(--space-6);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  border-left: 2px solid #eaeaea;
+  border-left: 2px solid var(--color-border);
 }
 
 .category-leaf.archived .category-row {
@@ -415,8 +988,8 @@ input[type="color"] {
 .payee-list th,
 .payee-list td {
   text-align: left;
-  padding: 0.5rem 0.4rem;
-  border-bottom: 1px solid #eaeaea;
+  padding: var(--space-2) 0.4rem;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .payee-list tr.archived {
@@ -426,34 +999,31 @@ input[type="color"] {
 .month-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
+  justify-content: flex-start;
+  gap: var(--space-4);
 }
 
 .month-label {
+  font-family: var(--font-mono);
   font-weight: 600;
   min-width: 10rem;
-  text-align: center;
+  text-align: left;
 }
 
 .cash-summary {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background-color: #ffffff;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
   font-size: 0.9rem;
 }
 
 .cash-summary .positive {
-  color: #2e8b57;
   font-weight: 700;
 }
 
 .cash-summary .negative {
-  color: #c0392b;
   font-weight: 700;
 }
 
@@ -461,17 +1031,69 @@ tr.archived {
   opacity: 0.5;
 }
 
-.budget-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
+/* Budget rows: a shared grid so the numeric columns line up down the page. */
+.budget-head,
+.budget-row {
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr) 10.5rem 6.5rem 6.5rem 1.9rem;
+  align-items: center;
+  gap: var(--space-3);
 }
 
-.budget-table th,
-.budget-table td {
-  text-align: left;
-  padding: 0.5rem 0.4rem;
-  border-bottom: 1px solid #eaeaea;
+.budget-head {
+  padding: 0 0 var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.budget-row {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.budget-row:last-child {
+  border-bottom: none;
+}
+
+.budget-tick {
+  width: 3px;
+  height: 1.5rem;
+  border-radius: 2px;
+  background-color: var(--color-text-muted);
+}
+
+.budget-good .budget-tick {
+  background-color: var(--color-sage);
+}
+.budget-warn .budget-tick {
+  background-color: var(--color-amber);
+}
+.budget-over .budget-tick {
+  background-color: var(--color-terracotta);
+}
+
+.budget-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.budget-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budget-num {
+  text-align: right;
+}
+
+.budget-num.negative {
+  color: var(--color-terracotta);
 }
 
 .budget-cap-cell {
@@ -482,98 +1104,227 @@ tr.archived {
 
 .budget-cap-cell input {
   width: 6rem;
+  text-align: right;
 }
 
-.budget-table td.negative {
-  color: #c0392b;
+.budget-save {
+  padding: 0.3em 0.6em;
+  font-size: 0.8rem;
 }
 
-tr.budget-good td:first-child {
-  border-left: 4px solid #2e8b57;
+.budget-row-action {
+  display: flex;
+  justify-content: flex-end;
 }
 
-tr.budget-warn td:first-child {
-  border-left: 4px solid #d9a441;
-}
-
-tr.budget-over td:first-child {
-  border-left: 4px solid #c0392b;
-}
-
-tr.budget-none td:first-child {
-  border-left: 4px solid #cccccc;
+.budget-error {
+  grid-column: 2 / -1;
 }
 
 .sweep-rule-note {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-muted);
   flex-basis: 100%;
+}
+
+.swept-notice {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.swept-notice p {
+  margin: var(--space-1) 0 0 0;
 }
 
 .clamp-note {
   font-size: 0.85rem;
-  color: #b8860b;
+  color: var(--color-amber);
   margin: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
-  }
+.dashboard-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
 
-  .account-form,
-  .transaction-form,
-  .inline-form,
-  .cash-summary {
-    background-color: #262626;
-    border-color: #3a3a3a;
-  }
+.dashboard-row-2col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
 
-  input,
-  select,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
-    border-color: #444;
-  }
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
 
-  button:active {
-    background-color: #0f0f0f69;
-  }
+.dashboard-card .loading-state,
+.dashboard-card .empty-state {
+  margin: 0;
+}
 
-  .account-list th,
-  .account-list td,
-  .transaction-list th,
-  .transaction-list td,
-  .payee-list th,
-  .payee-list td,
-  .budget-table th,
-  .budget-table td {
-    border-bottom-color: #3a3a3a;
-  }
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
 
-  .category-leaves {
-    border-left-color: #3a3a3a;
-  }
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
 
-  .empty-state {
-    color: #aaa;
-  }
+.summary-card-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
 
-  .transaction-list td.positive {
-    color: #4fd18b;
-  }
+.summary-card-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
 
-  .cash-summary .positive {
-    color: #4fd18b;
-  }
+.summary-card-value.positive {
+  color: var(--color-sage);
+}
 
-  .sweep-rule-note {
-    color: #aaa;
-  }
+.summary-card-value.negative {
+  color: var(--color-terracotta);
+}
 
-  .clamp-note {
-    color: #e0b84a;
-  }
+.budget-health-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.budget-health-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+  margin-bottom: var(--space-1);
+}
+
+.budget-health-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.budget-health-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budget-health-amounts {
+  flex: none;
+}
+
+.budget-health-amounts {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.budget-health-bar {
+  height: 5px;
+  border-radius: 3px;
+  background-color: var(--color-border);
+  overflow: hidden;
+}
+
+.budget-health-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.budget-health-item.budget-good .budget-health-bar-fill {
+  background-color: var(--color-sage);
+}
+
+.budget-health-item.budget-warn .budget-health-bar-fill {
+  background-color: var(--color-amber);
+}
+
+.budget-health-item.budget-over .budget-health-bar-fill {
+  background-color: var(--color-terracotta);
+}
+
+.budget-health-item.budget-none .budget-health-bar-fill {
+  background-color: var(--color-text-muted);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4em;
+}
+
+.month-nav-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.chart-tooltip {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.chart-tooltip-label {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.chart-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chart-legend {
+  list-style: none;
+  margin: var(--space-2) 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  justify-content: center;
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
 }

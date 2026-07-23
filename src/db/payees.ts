@@ -83,3 +83,22 @@ export async function updatePayee(db: Database, id: number, input: PayeeInput): 
 export async function setPayeeArchived(db: Database, id: number, archived: boolean): Promise<void> {
   await db.execute("UPDATE payees SET is_archived = ? WHERE id = ?", [archived ? 1 : 0, id]);
 }
+
+export interface PayeeDependencyInfo {
+  transactionCount: number;
+}
+
+export async function getPayeeDependencyInfo(db: Database, id: number): Promise<PayeeDependencyInfo> {
+  const rows = await db.select<{ n: number }[]>(
+    "SELECT COUNT(*) as n FROM transactions WHERE payee_id = ?",
+    [id],
+  );
+  return { transactionCount: rows[0]?.n ?? 0 };
+}
+
+// Payees are the lightest case: their transactions keep everything except the
+// payee reference (payee_id nulled), then the payee is removed.
+export async function deletePayee(db: Database, id: number): Promise<void> {
+  await db.execute("UPDATE transactions SET payee_id = NULL WHERE payee_id = ?", [id]);
+  await db.execute("DELETE FROM payees WHERE id = ?", [id]);
+}

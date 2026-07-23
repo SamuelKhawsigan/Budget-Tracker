@@ -1,51 +1,45 @@
+import { ArchiveRestore, Archive as ArchiveIcon, Pencil, Trash2 } from "lucide-react";
 import type { AccountWithBalance } from "../db/accounts";
 import { fromMinorUnits } from "../lib/money";
+import { RowActionButton } from "./RowActionButton";
 
 interface AccountListProps {
   accounts: AccountWithBalance[];
   onView: (id: number) => void;
   onEdit: (id: number) => void;
   onArchiveToggle: (id: number, archived: boolean) => void;
+  onDelete: (id: number) => void;
 }
 
-export function AccountList({ accounts, onView, onEdit, onArchiveToggle }: AccountListProps) {
+export function AccountList({ accounts, onView, onEdit, onArchiveToggle, onDelete }: AccountListProps) {
   if (accounts.length === 0) {
     return <p className="empty-state">No accounts yet — add one above.</p>;
   }
 
   return (
-    <table className="account-list">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Balance</th>
-          <th aria-label="Actions" />
-        </tr>
-      </thead>
-      <tbody>
-        {accounts.map((account) => (
-          <tr key={account.id} className={account.is_archived ? "archived" : undefined}>
-            <td>
-              <button type="button" className="link-button" onClick={() => onView(account.id)}>
-                {account.name}
-              </button>
-            </td>
-            <td>{account.type}</td>
-            <td className={account.balance < 0 ? "negative" : undefined}>
-              {account.currency} {fromMinorUnits(account.balance)}
-            </td>
-            <td className="account-actions">
-              <button type="button" onClick={() => onEdit(account.id)}>
-                Edit
-              </button>
-              <button type="button" onClick={() => onArchiveToggle(account.id, !account.is_archived)}>
-                {account.is_archived ? "Unarchive" : "Archive"}
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <ul className="entity-list">
+      {accounts.map((account) => (
+        <li key={account.id} className={"entity-row" + (account.is_archived ? " archived" : "")}>
+          <div className="entity-row-main">
+            <button type="button" className="link-button entity-row-title" onClick={() => onView(account.id)}>
+              {account.name}
+            </button>
+            <span className="pill">{account.type}</span>
+          </div>
+          <span className={"entity-row-value figure" + (account.balance < 0 ? " negative" : " positive")}>
+            {account.currency} {fromMinorUnits(account.balance)}
+          </span>
+          <div className="entity-row-actions">
+            <RowActionButton icon={Pencil} label="Edit" onClick={() => onEdit(account.id)} />
+            <RowActionButton
+              icon={account.is_archived ? ArchiveRestore : ArchiveIcon}
+              label={account.is_archived ? "Unarchive" : "Archive"}
+              onClick={() => onArchiveToggle(account.id, !account.is_archived)}
+            />
+            <RowActionButton icon={Trash2} label="Delete" danger onClick={() => onDelete(account.id)} />
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

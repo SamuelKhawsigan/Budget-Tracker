@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { fromMinorUnits, toMinorUnits } from "../lib/money";
 import type { CategoryOption } from "../db/categories";
 import type { Payee } from "../types";
+import { CategoryPicker } from "./CategoryPicker";
 
 type TxType = "income" | "expense";
 
@@ -54,22 +55,10 @@ export function TransactionForm({
   const amountRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    amountRef.current?.focus();
+    amountRef.current?.focus({ preventScroll: true });
   }, []);
 
   const filteredCategories = categories.filter((c) => c.kind === type);
-
-  // Groups are already ordered by the DB query (group sort_order, then leaf
-  // sort_order), so a simple pass preserves that order for the <optgroup>s.
-  const categoryGroups: { groupName: string; options: CategoryOption[] }[] = [];
-  for (const c of filteredCategories) {
-    const group = categoryGroups.find((g) => g.groupName === c.group_name);
-    if (group) {
-      group.options.push(c);
-    } else {
-      categoryGroups.push({ groupName: c.group_name, options: [c] });
-    }
-  }
 
   // Auto-fill the category from the payee's default_category_id, but only
   // when nothing has been chosen yet — never clobber an explicit selection —
@@ -122,7 +111,7 @@ export function TransactionForm({
         setCategoryId("");
         setPayeeName("");
         setNotes("");
-        amountRef.current?.focus();
+        amountRef.current?.focus({ preventScroll: true });
       }
     });
   }
@@ -173,23 +162,11 @@ export function TransactionForm({
       <div className="transaction-form-row">
         <label>
           Category
-          <select
-            value={categoryId}
-            onChange={(e) =>
-              setCategoryId(e.currentTarget.value === "" ? "" : Number(e.currentTarget.value))
-            }
-          >
-            <option value="">Uncategorized</option>
-            {categoryGroups.map((g) => (
-              <optgroup key={g.groupName} label={g.groupName}>
-                {g.options.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <CategoryPicker
+            categories={filteredCategories}
+            value={categoryId === "" ? null : categoryId}
+            onChange={(id) => setCategoryId(id ?? "")}
+          />
         </label>
 
         <label>
