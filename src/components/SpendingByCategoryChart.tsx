@@ -11,7 +11,7 @@ interface SpendingByCategoryChartProps {
 }
 
 export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) {
-  const { colors } = useTheme();
+  const { colors, resolvedTheme } = useTheme();
 
   if (data.length === 0) {
     return <p className="empty-state">No expenses recorded this month.</p>;
@@ -25,7 +25,7 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
             {data.map((entry) => (
               <Cell
                 key={entry.category_id}
-                fill={getCategoryColor({ id: entry.category_id, color: entry.color })}
+                fill={getCategoryColor(resolvedTheme, { id: entry.category_id, color: entry.color })}
                 stroke={colors.bg}
                 strokeWidth={2}
               />

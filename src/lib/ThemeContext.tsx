@@ -8,7 +8,16 @@ import {
 } from "react";
 import type Database from "@tauri-apps/plugin-sql";
 import { getSetting, setSetting } from "../db/settings";
-import { CSS_VAR_NAMES, THEMES, type ThemeColors, type ThemeName, type ThemePreference } from "./themes";
+import {
+  CSS_VAR_NAMES,
+  DEFAULT_DARK_THEME,
+  DEFAULT_LIGHT_THEME,
+  THEMES,
+  isThemeName,
+  type ThemeColors,
+  type ThemeName,
+  type ThemePreference,
+} from "./themes";
 import { FONT_CSS_VAR_NAMES, FONT_PRESETS, type FontPreset, type FontPresetName } from "./fontPresets";
 
 const THEME_SETTING_KEY = "theme";
@@ -16,15 +25,15 @@ const FONT_SETTING_KEY = "font_preset";
 const DEFAULT_FONT_PRESET: FontPresetName = "classic";
 
 function isThemePreference(value: string | null): value is ThemePreference {
-  return value === "dark" || value === "light" || value === "system";
+  return value === "system" || isThemeName(value);
 }
 
 function isFontPresetName(value: string | null): value is FontPresetName {
   return value === "classic" || value === "literary" || value === "technical";
 }
 
-function systemTheme(): ThemeName {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+function systemPrefersDark(): boolean {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
 function applyTheme(name: ThemeName, colors: ThemeColors) {
@@ -32,9 +41,11 @@ function applyTheme(name: ThemeName, colors: ThemeColors) {
   for (const key of Object.keys(colors) as (keyof ThemeColors)[]) {
     root.style.setProperty(CSS_VAR_NAMES[key], colors[key]);
   }
-  // Drives the select-arrow SVG variants in App.css, which can't reference
-  // CSS custom properties from inside a url() data-URI.
+  // data-theme drives per-theme swatch card previews elsewhere; data-theme-mode
+  // drives binary light/dark CSS forks that can't use CSS variables, like the
+  // select-arrow SVG data-URI (url() can't reference custom properties).
   root.dataset.theme = name;
+  root.dataset.themeMode = THEMES[name].mode;
 }
 
 function applyFontPreset(preset: FontPreset) {
@@ -56,8 +67,8 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ db, children }: { db: Database; children: ReactNode }) {
-  const [preference, setPreferenceState] = useState<ThemePreference>("dark");
-  const [systemIsDark, setSystemIsDark] = useState(() => systemTheme() === "dark");
+  const [preference, setPreferenceState] = useState<ThemePreference>(DEFAULT_DARK_THEME);
+  const [systemIsDark, setSystemIsDark] = useState(() => systemPrefersDark());
   const [fontPresetName, setFontPresetNameState] = useState<FontPresetName>(DEFAULT_FONT_PRESET);
 
   useEffect(() => {
@@ -78,8 +89,9 @@ export function ThemeProvider({ db, children }: { db: Database; children: ReactN
     return () => media.removeEventListener("change", onChange);
   }, []);
 
-  const resolvedTheme: ThemeName = preference === "system" ? (systemIsDark ? "dark" : "light") : preference;
-  const colors = THEMES[resolvedTheme];
+  const resolvedTheme: ThemeName =
+    preference === "system" ? (systemIsDark ? DEFAULT_DARK_THEME : DEFAULT_LIGHT_THEME) : preference;
+  const colors = THEMES[resolvedTheme].colors;
   const fontPreset = FONT_PRESETS[fontPresetName];
 
   useEffect(() => {

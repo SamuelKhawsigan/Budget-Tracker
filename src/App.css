@@ -7,12 +7,16 @@
 :root {
   --bg: #17150f;
   --surface: #201e16;
-  --border: rgba(237, 233, 221, 0.08);
+  --surface-alt: #262218;
   --text-primary: #ede9dd;
   --text-muted: #9c9686;
   --accent: #9bb07a;
   --danger: #ce6a4c;
   --warning: #d8a657;
+
+  /* Derived, not per-theme: a new theme in themes.ts gets a correctly
+     contrasted border for free instead of needing its own hand-picked value. */
+  --border: color-mix(in srgb, var(--text-primary) 9%, transparent);
 
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -163,7 +167,7 @@ button:hover {
 }
 
 button:active {
-  background-color: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  background-color: var(--surface-alt);
 }
 
 .btn-primary {
@@ -210,14 +214,15 @@ select {
 }
 
 /* url() data-URIs can't reference CSS custom properties, so the chevron's
-   stroke color is baked in per theme and swapped via the data-theme
-   attribute ThemeProvider sets on <html>, rather than one static color. */
-:root[data-theme="light"] select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6558' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+   stroke color is baked in per mode and swapped via the data-theme-mode
+   attribute ThemeProvider sets on <html> (one of six themes maps to each
+   mode), rather than one static color. */
+:root[data-theme-mode="light"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
-:root:not([data-theme="light"]) select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239c9686' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+:root:not([data-theme-mode="light"]) select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239a9a9a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
 input[type="checkbox"] {
@@ -415,7 +420,7 @@ button:focus-visible {
 }
 
 .category-picker-option:hover {
-  background-color: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  background-color: var(--surface-alt);
   border-color: transparent;
 }
 
@@ -611,7 +616,7 @@ button:focus-visible {
 }
 
 .entity-row:hover {
-  background-color: color-mix(in srgb, var(--text-primary) 3%, transparent);
+  background-color: var(--surface-alt);
 }
 
 .account-form {
@@ -834,7 +839,7 @@ button:focus-visible {
   flex-direction: column;
   gap: var(--space-6);
   padding: var(--space-6) var(--space-3);
-  background-color: var(--surface);
+  background-color: var(--surface-alt);
   border-right: 1px solid var(--border);
   overflow-y: auto;
 }
@@ -1264,10 +1269,19 @@ tr.archived {
   color: var(--text-muted);
 }
 
+.budget-health-pct {
+  display: inline-block;
+  min-width: 2.6rem;
+  margin-left: var(--space-2);
+  text-align: right;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 .budget-health-bar {
   height: 5px;
   border-radius: 3px;
-  background-color: var(--border);
+  background-color: var(--surface-alt);
   overflow: hidden;
 }
 
@@ -1377,4 +1391,334 @@ tr.archived {
   font-size: 0.8rem;
   color: var(--text-muted);
   margin: 0;
+}
+
+.theme-swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: var(--space-3);
+}
+
+.theme-swatch-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  text-align: left;
+}
+
+.theme-swatch-card:hover {
+  border-color: var(--accent);
+}
+
+.theme-swatch-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.theme-swatch-check {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  color: var(--accent);
+  background-color: var(--surface);
+  border-radius: 999px;
+  padding: 2px;
+}
+
+.theme-swatch-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: var(--space-2);
+  border-radius: calc(var(--radius) - 3px);
+}
+
+.theme-swatch-topbar {
+  height: 6px;
+  border-radius: 3px;
+  width: 60%;
+}
+
+.theme-swatch-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.theme-swatch-meter {
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.theme-swatch-meter-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.theme-swatch-muted {
+  font-size: 0.7rem;
+}
+
+.theme-swatch-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0 0.1rem;
+}
+
+.theme-swatch-system {
+  color: var(--text-primary);
+}
+
+.theme-swatch-system .theme-swatch-label {
+  color: var(--text-primary);
+}
+
+.theme-swatch-system-preview {
+  align-items: center;
+  justify-content: center;
+  min-height: 3.6rem;
+  background-color: rgba(128, 128, 128, 0.2);
+}
+
+/* Account bubble cards ---------------------------------------------------- */
+
+.account-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.account-grid[data-tier="one"] {
+  grid-template-columns: minmax(0, 520px);
+  justify-content: center;
+}
+
+.account-grid[data-tier="two"] {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.account-grid[data-tier="few"],
+.account-grid[data-tier="many"] {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.account-grid[data-tier="dense"] {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+/* Always collapse to fewer columns on a narrow window, regardless of tier. */
+@media (max-width: 760px) {
+  .account-grid[data-tier="two"],
+  .account-grid[data-tier="few"],
+  .account-grid[data-tier="many"] {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .account-grid[data-tier="dense"] {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .account-grid[data-tier="two"],
+  .account-grid[data-tier="few"],
+  .account-grid[data-tier="many"],
+  .account-grid[data-tier="dense"] {
+    grid-template-columns: 1fr;
+  }
+}
+
+.account-tile {
+  position: relative;
+  /* aspect-ratio gives grid items an intrinsic ratio, which makes the default
+     justify-self:normal resolve to start instead of stretch — without this,
+     every tile shrinks to its aspect-ratio-preferred width, leaving the rest
+     of its 1fr column track as dead space. */
+  justify-self: stretch;
+  align-self: stretch;
+  container-type: inline-size;
+  container-name: account-tile;
+  aspect-ratio: 16 / 9;
+  min-height: 100px;
+  max-height: 170px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.account-tile.archived {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.account-tile-body {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: var(--space-3);
+  border: none;
+  background: none;
+  box-shadow: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.account-tile-body:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.account-tile-actions {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.15rem;
+}
+
+.account-tile-icon-well {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(1.8rem, 14cqw, 2.6rem);
+  height: clamp(1.8rem, 14cqw, 2.6rem);
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  flex: none;
+}
+
+.account-tile-icon-glyph {
+  width: clamp(0.9rem, 8cqw, 1.4rem);
+  height: clamp(0.9rem, 8cqw, 1.4rem);
+}
+
+.account-tile-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(0.82rem, 6cqw, 1.05rem);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-tile-pill {
+  font-size: clamp(0.55rem, 3.5cqw, 0.68rem);
+}
+
+.account-tile-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  max-width: 100%;
+}
+
+.account-tile-whole {
+  font-size: clamp(1.1rem, 9cqw, 2.4rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.account-tile-frac {
+  font-size: clamp(0.8rem, 6.5cqw, 1.6rem);
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.account-tile-currency {
+  font-size: clamp(0.5rem, 3.5cqw, 0.65rem);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 0.2rem;
+}
+
+.account-tile-balance.positive .account-tile-whole {
+  color: var(--accent);
+}
+
+.account-tile-balance.negative .account-tile-whole {
+  color: var(--danger);
+}
+
+/* Drop secondary details before the tile gets too small to hold them —
+   icon, name and the balance figure itself are never dropped. */
+@container account-tile (max-width: 170px) {
+  .account-tile-pill,
+  .account-tile-currency {
+    display: none;
+  }
+}
+
+.account-tile-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 2px dashed var(--border);
+  background: none;
+  color: var(--text-muted);
+  box-shadow: none;
+}
+
+.account-tile-add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.account-tile-add span {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.account-form-modal {
+  width: 100%;
+  max-width: 480px;
+}
+
+.account-form-modal .account-form {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.page-header-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.page-header-total {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.page-header-total .figure {
+  margin-left: 0.3rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.savings-account-display {
+  align-items: center;
+}
+
+.savings-account-tile-wrap {
+  width: 200px;
+  flex: none;
 }

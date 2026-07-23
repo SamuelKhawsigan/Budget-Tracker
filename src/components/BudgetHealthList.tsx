@@ -18,7 +18,13 @@ export function BudgetHealthList({ summaries }: BudgetHealthListProps) {
       {budgeted.map((s) => {
         const cap = s.cap ?? 0;
         const health = getBudgetHealth(s.cap, s.spent);
-        const ratio = cap > 0 ? Math.min(s.spent / cap, 1) : s.spent > 0 ? 1 : 0;
+        // The bar's fill can't usefully exceed 100% width, but the percentage
+        // text isn't visually constrained that way — showing the real,
+        // uncapped number (not clamped like the bar) is what lets someone
+        // tell "right at the cap" apart from "3x over" without relying on the
+        // fill color alone.
+        const actualRatio = cap > 0 ? s.spent / cap : s.spent > 0 ? 1 : 0;
+        const barRatio = Math.min(actualRatio, 1);
 
         return (
           <li key={s.category_id} className={`budget-health-item budget-${health}`}>
@@ -31,10 +37,11 @@ export function BudgetHealthList({ summaries }: BudgetHealthListProps) {
               </span>
               <span className="budget-health-amounts figure">
                 {fromMinorUnits(s.spent)} / {fromMinorUnits(cap)}
+                <span className="budget-health-pct">{Math.round(actualRatio * 100)}%</span>
               </span>
             </div>
             <div className="budget-health-bar">
-              <div className="budget-health-bar-fill" style={{ width: `${ratio * 100}%` }} />
+              <div className="budget-health-bar-fill" style={{ width: `${barRatio * 100}%` }} />
             </div>
           </li>
         );

@@ -11,8 +11,9 @@ import {
   type AccountWithBalance,
 } from "../db/accounts";
 import { AccountForm } from "../components/AccountForm";
-import { AccountList } from "../components/AccountList";
+import { AccountGrid } from "../components/AccountGrid";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { fromMinorUnits } from "../lib/money";
 import { useDeleteFlow } from "../lib/useDeleteFlow";
 
 interface AccountsPageProps {
@@ -24,6 +25,7 @@ export function AccountsPage({ db, onSelectAccount }: AccountsPageProps) {
   const [accounts, setAccounts] = useState<AccountWithBalance[]>([]);
   const [showArchived, setShowArchived] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const del = useDeleteFlow(setError);
 
@@ -38,6 +40,14 @@ export function AccountsPage({ db, onSelectAccount }: AccountsPageProps) {
     void refresh(showArchived);
   }, [refresh, showArchived]);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setFormOpen(false);
+    }
+    if (formOpen) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [formOpen]);
+
   async function handleSubmit(values: AccountInput) {
     setError(null);
     try {
@@ -47,10 +57,21 @@ export function AccountsPage({ db, onSelectAccount }: AccountsPageProps) {
         await createAccount(db, values);
       }
       setEditingId(null);
+      setFormOpen(false);
       await refresh(showArchived);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
+  }
+
+  function handleAddClick() {
+    setEditingId(null);
+    setFormOpen(true);
+  }
+
+  function handleEditClick(id: number) {
+    setEditingId(id);
+    setFormOpen(true);
   }
 
   async function handleArchiveToggle(id: number, archived: boolean) {
@@ -80,26 +101,32 @@ export function AccountsPage({ db, onSelectAccount }: AccountsPageProps) {
         ),
       run: async () => {
         await deleteAccountCascade(db, id);
-        if (editingId === id) setEditingId(null);
+        if (editingId === id) {
+          setEditingId(null);
+          setFormOpen(false);
+        }
         await refresh(showArchived);
       },
     });
   }
 
   const editingAccount = editingId != null ? accounts.find((a) => a.id === editingId) ?? null : null;
+  const activeAccounts = accounts.filter((a) => !a.is_archived);
+  const total = activeAccounts.reduce((sum, a) => sum + a.balance, 0);
+  const totalCurrency = activeAccounts[0]?.currency ?? "MYR";
 
   return (
     <>
-      <h1>Accounts</h1>
+      <div className="page-header-row">
+        <h1>Accounts</h1>
+        {activeAccounts.length > 0 && (
+          <span className="page-header-total">
+            Total <span className="figure">{totalCurrency} {fromMinorUnits(total)}</span>
+          </span>
+        )}
+      </div>
 
       {error && <p className="form-error">{error}</p>}
-
-      <AccountForm
-        key={editingId ?? "new"}
-        initial={editingAccount}
-        onSubmit={handleSubmit}
-        onCancel={() => setEditingId(null)}
-      />
 
       <label className="show-archived">
         <input
@@ -110,15 +137,27 @@ export function AccountsPage({ db, onSelectAccount }: AccountsPageProps) {
         Show archived accounts
       </label>
 
-      <div className="card">
-        <AccountList
-          accounts={accounts}
-          onView={onSelectAccount}
-          onEdit={setEditingId}
-          onArchiveToggle={handleArchiveToggle}
-          onDelete={handleDeleteRequest}
-        />
-      </div>
+      <AccountGrid
+        accounts={accounts}
+        onView={onSelectAccount}
+        onEdit={handleEditClick}
+        onArchiveToggle={handleArchiveToggle}
+        onDelete={handleDeleteRequest}
+        onAddClick={handleAddClick}
+      />
+
+      {formOpen && (
+        <div className="modal-backdrop" onClick={() => setFormOpen(false)}>
+          <div className="modal-card account-form-modal" onClick={(e) => e.stopPropagation()}>
+            <AccountForm
+              key={editingId ?? "new"}
+              initial={editingAccount}
+              onSubmit={handleSubmit}
+              onCancel={() => setFormOpen(false)}
+            />
+          </div>
+        </div>
+      )}
 
       {del.pending && (
         <ConfirmDialog

@@ -15,6 +15,7 @@ import { currentMonth, monthLabel, shiftMonth } from "../lib/month";
 import { fromMinorUnits } from "../lib/money";
 import { MonthNav } from "../components/MonthNav";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { AccountTile } from "../components/AccountTile";
 import { useDeleteFlow } from "../lib/useDeleteFlow";
 
 interface SavingsPageProps {
@@ -112,10 +113,12 @@ export function SavingsPage({ db }: SavingsPageProps) {
     <>
       <h1>Savings</h1>
 
-      <div className="inline-form">
+      <div className="inline-form savings-account-display">
         <h2>Savings account</h2>
         {savingsAccount ? (
-          <span className="entity-row-title">{savingsAccount.name}</span>
+          <div className="savings-account-tile-wrap">
+            <AccountTile account={savingsAccount} />
+          </div>
         ) : (
           <span className="empty-state">Not set — choose one in Settings.</span>
         )}

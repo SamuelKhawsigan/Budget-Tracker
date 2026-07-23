@@ -102,11 +102,9 @@ export function AccountForm({ initial, onSubmit, onCancel }: AccountFormProps) {
         <button type="submit" className="btn-primary">
           {initial ? "Save changes" : "Add account"}
         </button>
-        {initial && (
-          <button type="button" onClick={onCancel}>
-            Cancel
-          </button>
-        )}
+        <button type="button" onClick={onCancel}>
+          Cancel
+        </button>
       </div>
     </form>
   );

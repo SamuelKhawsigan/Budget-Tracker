@@ -12,10 +12,11 @@ import {
 import { backupDatabase } from "../lib/file";
 import { useTheme } from "../lib/ThemeContext";
 import { FONT_PRESETS, type FontPresetName } from "../lib/fontPresets";
-import type { ThemePreference } from "../lib/themes";
+import { THEMES, type ThemeName } from "../lib/themes";
 import type { SweepRule } from "../db/savings";
 import { RowActionButton } from "../components/RowActionButton";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { ThemeSwatchCard, SystemSwatchCard } from "../components/ThemeSwatchCard";
 import { useDeleteFlow } from "../lib/useDeleteFlow";
 
 interface SettingsPageProps {
@@ -24,11 +25,7 @@ interface SettingsPageProps {
 
 type BudgetingMode = "available" | "fixed";
 
-const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
-  { value: "dark", label: "Warm Dark" },
-  { value: "light", label: "Warm Light" },
-  { value: "system", label: "System" },
-];
+const THEME_ENTRIES = Object.entries(THEMES) as [ThemeName, (typeof THEMES)[ThemeName]][];
 
 const FONT_OPTIONS = Object.entries(FONT_PRESETS) as [FontPresetName, (typeof FONT_PRESETS)[FontPresetName]][];
 
@@ -208,17 +205,17 @@ export function SettingsPage({ db }: SettingsPageProps) {
 
         <div className="settings-field">
           <label>Theme</label>
-          <div className="type-toggle">
-            {THEME_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                className={preference === opt.value ? "active" : undefined}
-                onClick={() => setPreference(opt.value)}
-              >
-                {opt.label}
-              </button>
+          <div className="theme-swatch-grid">
+            {THEME_ENTRIES.map(([name, def]) => (
+              <ThemeSwatchCard
+                key={name}
+                label={def.label}
+                colors={def.colors}
+                selected={preference === name}
+                onSelect={() => setPreference(name)}
+              />
             ))}
+            <SystemSwatchCard selected={preference === "system"} onSelect={() => setPreference("system")} />
           </div>
         </div>
 

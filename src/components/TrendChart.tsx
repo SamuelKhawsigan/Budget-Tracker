@@ -12,6 +12,7 @@ import {
 import type { MonthTrendPoint } from "../db/dashboard";
 import { monthShortLabel } from "../lib/month";
 import { useTheme } from "../lib/ThemeContext";
+import { withAlpha } from "../lib/themes";
 import { ChartTooltip } from "./ChartTooltip";
 
 interface TrendChartProps {
@@ -28,6 +29,7 @@ function toDisplayAmount(minor: number): number {
 export function TrendChart({ data }: TrendChartProps) {
   const { colors } = useTheme();
   const axisTick = { fill: colors.textMuted, fontSize: 12, fontFamily: "JetBrains Mono, monospace" };
+  const gridColor = withAlpha(colors.textPrimary, 0.09);
   const chartData = data.map((p) => ({
     month: monthShortLabel(p.month),
     Income: toDisplayAmount(p.income),
@@ -38,9 +40,9 @@ export function TrendChart({ data }: TrendChartProps) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={chartData} barGap={4}>
-        <CartesianGrid strokeDasharray="3 3" stroke={colors.border} vertical={false} />
-        <XAxis dataKey="month" tick={axisTick} axisLine={{ stroke: colors.border }} tickLine={false} />
-        <YAxis tick={axisTick} axisLine={{ stroke: colors.border }} tickLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+        <XAxis dataKey="month" tick={axisTick} axisLine={{ stroke: gridColor }} tickLine={false} />
+        <YAxis tick={axisTick} axisLine={{ stroke: gridColor }} tickLine={false} />
         <Tooltip content={(props: any) => <ChartTooltip {...props} formatValue={(v) => v.toFixed(2)} />} />
         <Legend wrapperStyle={{ color: colors.textMuted, fontSize: "0.8rem", fontFamily: "Inter, sans-serif" }} />
         <Bar dataKey="Income" fill={colors.accent} barSize={18} />
