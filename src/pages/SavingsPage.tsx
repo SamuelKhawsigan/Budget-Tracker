@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
 import { listAccounts, type AccountWithBalance } from "../db/accounts";
-import { getSetting, setSetting } from "../db/settings";
+import { getSetting } from "../db/settings";
 import {
   closeMonth,
   getProjectedSavings,
@@ -72,19 +72,6 @@ export function SavingsPage({ db }: SavingsPageProps) {
     }
   }, [accounts, savingsAccountId, sourceAccountId]);
 
-  async function handleSaveSavingsAccount(id: number) {
-    setError(null);
-    try {
-      await setSetting(db, "savings_account_id", String(id));
-      setSavingsAccountId(id);
-      if (sourceAccountId === id) {
-        setSourceAccountId("");
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
   async function handleCloseMonth() {
     if (savingsAccountId === "" || sourceAccountId === "" || !projected) return;
     setError(null);
@@ -119,25 +106,19 @@ export function SavingsPage({ db }: SavingsPageProps) {
     });
   }
 
+  const savingsAccount = accounts.find((a) => a.id === savingsAccountId) ?? null;
+
   return (
     <>
       <h1>Savings</h1>
 
       <div className="inline-form">
         <h2>Savings account</h2>
-        <select
-          value={savingsAccountId}
-          onChange={(e) => void handleSaveSavingsAccount(Number(e.currentTarget.value))}
-        >
-          <option value="" disabled>
-            Choose an account
-          </option>
-          {accounts.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
+        {savingsAccount ? (
+          <span className="entity-row-title">{savingsAccount.name}</span>
+        ) : (
+          <span className="empty-state">Not set — choose one in Settings.</span>
+        )}
         <span className="sweep-rule-note">
           Rule:{" "}
           {sweepRule === "positive"

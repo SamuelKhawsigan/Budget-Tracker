@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   PiggyBank,
   Plus,
+  Settings,
   Tags,
   Target,
   Upload,
@@ -21,7 +22,8 @@ export type ViewName =
   | "payees"
   | "budgets"
   | "savings"
-  | "import";
+  | "import"
+  | "settings";
 
 interface NavItem {
   key: ViewName;
@@ -67,10 +69,22 @@ export function Sidebar({ activeView, onNavigate, onQuickAdd }: SidebarProps) {
         ))}
       </ul>
 
-      <button type="button" className="sidebar-quick-add" onClick={onQuickAdd}>
-        <Plus size={17} />
-        <span>Quick add</span>
-      </button>
+      <div className="sidebar-footer">
+        <button
+          type="button"
+          className={"sidebar-link" + (activeView === "settings" ? " active" : "")}
+          onClick={() => onNavigate("settings")}
+          aria-current={activeView === "settings" ? "page" : undefined}
+        >
+          <Settings size={17} />
+          <span>Settings</span>
+        </button>
+
+        <button type="button" className="sidebar-quick-add" onClick={onQuickAdd}>
+          <Plus size={17} />
+          <span>Quick add</span>
+        </button>
+      </div>
     </nav>
   );
 }

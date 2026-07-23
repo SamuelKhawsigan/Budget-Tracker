@@ -5,14 +5,14 @@
 }
 
 :root {
-  --color-bg: #17150f;
-  --color-surface: #201e16;
-  --color-border: rgba(237, 233, 221, 0.08);
-  --color-text: #ede9dd;
-  --color-text-muted: #9c9686;
-  --color-sage: #9bb07a;
-  --color-terracotta: #ce6a4c;
-  --color-amber: #d8a657;
+  --bg: #17150f;
+  --surface: #201e16;
+  --border: rgba(237, 233, 221, 0.08);
+  --text-primary: #ede9dd;
+  --text-muted: #9c9686;
+  --accent: #9bb07a;
+  --danger: #ce6a4c;
+  --warning: #d8a657;
 
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -31,8 +31,8 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color: var(--color-text);
-  background-color: var(--color-bg);
+  color: var(--text-primary);
+  background-color: var(--bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -47,11 +47,11 @@
 }
 
 .positive {
-  color: var(--color-sage);
+  color: var(--accent);
 }
 
 .negative {
-  color: var(--color-terracotta);
+  color: var(--danger);
 }
 
 html,
@@ -105,7 +105,7 @@ h1 {
   font-size: 1.6rem;
   text-align: left;
   margin: 0;
-  color: var(--color-text);
+  color: var(--text-primary);
 }
 
 h2 {
@@ -116,7 +116,7 @@ h2 {
   letter-spacing: 0.08em;
   text-align: left;
   margin: 0;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -124,21 +124,21 @@ h2 {
 
 .section-icon {
   flex: none;
-  color: var(--color-sage);
+  color: var(--accent);
 }
 
 input,
 select,
 button {
   border-radius: var(--radius);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border);
   padding: 0.55em 0.8em;
   line-height: 1.2;
   font-size: 0.95rem;
   font-weight: 500;
   font-family: var(--font-body);
-  color: var(--color-text);
-  background-color: var(--color-surface);
+  color: var(--text-primary);
+  background-color: var(--surface);
   transition:
     border-color 0.15s ease-out,
     background-color 0.15s ease-out;
@@ -150,7 +150,7 @@ label {
   gap: var(--space-1);
   font-size: 0.9rem;
   text-align: left;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 button {
@@ -159,59 +159,69 @@ button {
 }
 
 button:hover {
-  border-color: var(--color-sage);
+  border-color: var(--accent);
 }
 
 button:active {
-  background-color: rgba(237, 233, 221, 0.06);
+  background-color: color-mix(in srgb, var(--text-primary) 6%, transparent);
 }
 
 .btn-primary {
-  background-color: var(--color-sage);
-  border-color: var(--color-sage);
-  color: var(--color-bg);
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
   font-family: var(--font-display);
   font-weight: 600;
 }
 
 .btn-primary:hover {
-  background-color: #a8bd8c;
-  border-color: #a8bd8c;
+  background-color: color-mix(in srgb, var(--accent), white 15%);
+  border-color: color-mix(in srgb, var(--accent), white 15%);
 }
 
 .btn-primary:active {
-  background-color: #94aa76;
+  background-color: color-mix(in srgb, var(--accent), black 12%);
 }
 
 .btn-danger {
-  background-color: var(--color-terracotta);
-  border-color: var(--color-terracotta);
-  color: var(--color-bg);
+  background-color: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg);
   font-family: var(--font-display);
   font-weight: 600;
 }
 
 .btn-danger:hover {
-  background-color: #d87e63;
-  border-color: #d87e63;
+  background-color: color-mix(in srgb, var(--danger), white 15%);
+  border-color: color-mix(in srgb, var(--danger), white 15%);
 }
 
 .btn-danger:active {
-  background-color: #b95c40;
+  background-color: color-mix(in srgb, var(--danger), black 12%);
 }
 
 select {
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239c9686' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.6em center;
   background-size: 14px;
   padding-right: 2em;
 }
 
+/* url() data-URIs can't reference CSS custom properties, so the chevron's
+   stroke color is baked in per theme and swapped via the data-theme
+   attribute ThemeProvider sets on <html>, rather than one static color. */
+:root[data-theme="light"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6558' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+:root:not([data-theme="light"]) select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239c9686' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
 input[type="checkbox"] {
-  accent-color: var(--color-sage);
+  accent-color: var(--accent);
   width: 1rem;
   height: 1rem;
   padding: 0;
@@ -226,8 +236,8 @@ button {
 input:focus-visible,
 select:focus-visible,
 button:focus-visible {
-  border-color: var(--color-sage);
-  box-shadow: 0 0 0 2px rgba(155, 176, 122, 0.35);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .color-swatch-picker {
@@ -246,11 +256,11 @@ button:focus-visible {
 }
 
 .color-swatch:hover {
-  border-color: var(--color-border);
+  border-color: var(--border);
 }
 
 .color-swatch.selected {
-  border-color: var(--color-text);
+  border-color: var(--text-primary);
 }
 
 .category-icon-glyph {
@@ -268,7 +278,7 @@ button:focus-visible {
   justify-content: center;
   width: 2.35rem;
   padding: 0;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .icon-picker-placeholder {
@@ -293,8 +303,8 @@ button:focus-visible {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-2);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: 0 8px 24px rgba(9, 8, 5, 0.4);
 }
@@ -317,23 +327,23 @@ button:focus-visible {
   justify-content: center;
   aspect-ratio: 1;
   padding: 0;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .icon-picker-cell:hover {
-  color: var(--color-sage);
+  color: var(--accent);
 }
 
 .icon-picker-cell.selected {
-  border-color: var(--color-sage);
-  color: var(--color-sage);
-  background-color: rgba(155, 176, 122, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .icon-picker-empty {
   grid-column: 1 / -1;
   font-size: 0.8rem;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   text-align: center;
   margin: var(--space-2) 0;
 }
@@ -362,7 +372,7 @@ button:focus-visible {
 }
 
 .category-picker-placeholder {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .category-picker-menu {
@@ -377,8 +387,8 @@ button:focus-visible {
   flex-direction: column;
   gap: 0.1rem;
   padding: var(--space-2);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: 0 8px 24px rgba(9, 8, 5, 0.4);
 }
@@ -387,7 +397,7 @@ button:focus-visible {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   padding: 0.4rem 0.5rem 0.15rem;
 }
 
@@ -405,13 +415,13 @@ button:focus-visible {
 }
 
 .category-picker-option:hover {
-  background-color: rgba(237, 233, 221, 0.06);
+  background-color: color-mix(in srgb, var(--text-primary) 6%, transparent);
   border-color: transparent;
 }
 
 .category-picker-option.selected {
-  color: var(--color-sage);
-  background-color: rgba(155, 176, 122, 0.12);
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .account-form,
@@ -421,8 +431,8 @@ button:focus-visible {
 .summary-card,
 .dashboard-card,
 .card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 
@@ -449,7 +459,7 @@ button:focus-visible {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-1);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .entity-row:last-child {
@@ -478,7 +488,7 @@ button:focus-visible {
 
 .entity-row-meta {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -512,7 +522,7 @@ button:focus-visible {
   flex: none;
   border-color: transparent;
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   opacity: 0.65;
   box-shadow: none;
 }
@@ -525,13 +535,13 @@ button:focus-visible {
 }
 
 .row-icon-btn:hover {
-  color: var(--color-sage);
-  border-color: var(--color-border);
-  background-color: var(--color-bg);
+  color: var(--accent);
+  border-color: var(--border);
+  background-color: var(--bg);
 }
 
 .row-icon-btn.danger:hover {
-  color: var(--color-terracotta);
+  color: var(--danger);
 }
 
 .modal-backdrop {
@@ -552,8 +562,8 @@ button:focus-visible {
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-6);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 
@@ -563,17 +573,17 @@ button:focus-visible {
   font-weight: 700;
   text-transform: none;
   letter-spacing: normal;
-  color: var(--color-text);
+  color: var(--text-primary);
 }
 
 .modal-message {
   font-size: 0.9rem;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
 .modal-message strong {
-  color: var(--color-text);
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -588,12 +598,12 @@ button:focus-visible {
   display: inline-flex;
   align-items: center;
   padding: 0.15rem 0.6rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border);
   border-radius: 999px;
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .entity-row {
@@ -601,7 +611,7 @@ button:focus-visible {
 }
 
 .entity-row:hover {
-  background-color: rgba(237, 233, 221, 0.03);
+  background-color: color-mix(in srgb, var(--text-primary) 3%, transparent);
 }
 
 .account-form {
@@ -619,13 +629,13 @@ button:focus-visible {
 }
 
 .form-error {
-  color: var(--color-terracotta);
+  color: var(--danger);
   font-size: 0.9rem;
   margin: 0;
 }
 
 .form-success {
-  color: var(--color-sage);
+  color: var(--accent);
   font-size: 0.9rem;
   margin: 0;
 }
@@ -636,7 +646,7 @@ button:focus-visible {
   align-items: center;
   gap: var(--space-2);
   font-size: 0.9rem;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .account-list {
@@ -648,7 +658,7 @@ button:focus-visible {
 .account-list td {
   text-align: left;
   padding: var(--space-2) 0.4rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .account-list tr.archived {
@@ -656,7 +666,7 @@ button:focus-visible {
 }
 
 .account-list td.negative {
-  color: var(--color-terracotta);
+  color: var(--danger);
 }
 
 .account-actions {
@@ -667,12 +677,12 @@ button:focus-visible {
 
 .empty-state {
   text-align: left;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .loading-state {
   text-align: left;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
@@ -681,13 +691,13 @@ button:focus-visible {
   background: none;
   box-shadow: none;
   padding: 0;
-  color: var(--color-text);
+  color: var(--text-primary);
   font-weight: 600;
   text-decoration: none;
 }
 
 .link-button:hover {
-  color: var(--color-sage);
+  color: var(--accent);
   border: none;
 }
 
@@ -697,7 +707,7 @@ button:focus-visible {
   background: none;
   box-shadow: none;
   padding: 0;
-  color: var(--color-sage);
+  color: var(--accent);
   font-weight: 500;
 }
 
@@ -732,7 +742,7 @@ button:focus-visible {
 }
 
 .account-balance.negative {
-  color: var(--color-terracotta);
+  color: var(--danger);
 }
 
 .transaction-form {
@@ -771,9 +781,9 @@ button:focus-visible {
 }
 
 .type-toggle button.active {
-  border-color: var(--color-sage);
-  background-color: var(--color-sage);
-  color: var(--color-bg);
+  border-color: var(--accent);
+  background-color: var(--accent);
+  color: var(--bg);
 }
 
 .transaction-filters {
@@ -799,15 +809,15 @@ button:focus-visible {
 .transaction-list td {
   text-align: left;
   padding: var(--space-2) 0.4rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .transaction-list td.negative {
-  color: var(--color-terracotta);
+  color: var(--danger);
 }
 
 .transaction-list td.positive {
-  color: var(--color-sage);
+  color: var(--accent);
 }
 
 .transaction-actions {
@@ -824,8 +834,8 @@ button:focus-visible {
   flex-direction: column;
   gap: var(--space-6);
   padding: var(--space-6) var(--space-3);
-  background-color: var(--color-surface);
-  border-right: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border-right: 1px solid var(--border);
   overflow-y: auto;
 }
 
@@ -834,7 +844,7 @@ button:focus-visible {
   font-weight: 700;
   font-size: 1rem;
   padding: 0 var(--space-3);
-  color: var(--color-text);
+  color: var(--text-primary);
 }
 
 .sidebar-nav {
@@ -859,23 +869,29 @@ button:focus-visible {
   font-family: var(--font-body);
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   text-align: left;
   box-shadow: none;
 }
 
 .sidebar-link:hover {
-  color: var(--color-text);
-  border-color: var(--color-border);
+  color: var(--text-primary);
+  border-color: var(--border);
 }
 
 .sidebar-link.active {
-  color: var(--color-sage);
-  background-color: rgba(155, 176, 122, 0.12);
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .sidebar-link svg {
   flex: none;
+}
+
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .sidebar-quick-add {
@@ -884,14 +900,14 @@ button:focus-visible {
   justify-content: center;
   gap: var(--space-2);
   padding: 0.6rem var(--space-3);
-  border-color: var(--color-sage);
-  background-color: rgba(155, 176, 122, 0.12);
-  color: var(--color-sage);
+  border-color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
   font-weight: 600;
 }
 
 .sidebar-quick-add:hover {
-  background-color: rgba(155, 176, 122, 0.2);
+  background-color: color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .inline-form {
@@ -962,7 +978,7 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  border-left: 2px solid var(--color-border);
+  border-left: 2px solid var(--border);
 }
 
 .category-leaf.archived .category-row {
@@ -989,7 +1005,7 @@ button:focus-visible {
 .payee-list td {
   text-align: left;
   padding: var(--space-2) 0.4rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .payee-list tr.archived {
@@ -1042,16 +1058,16 @@ tr.archived {
 
 .budget-head {
   padding: 0 0 var(--space-2) 0;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .budget-row {
   padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .budget-row:last-child {
@@ -1062,17 +1078,17 @@ tr.archived {
   width: 3px;
   height: 1.5rem;
   border-radius: 2px;
-  background-color: var(--color-text-muted);
+  background-color: var(--text-muted);
 }
 
 .budget-good .budget-tick {
-  background-color: var(--color-sage);
+  background-color: var(--accent);
 }
 .budget-warn .budget-tick {
-  background-color: var(--color-amber);
+  background-color: var(--warning);
 }
 .budget-over .budget-tick {
-  background-color: var(--color-terracotta);
+  background-color: var(--danger);
 }
 
 .budget-name {
@@ -1093,7 +1109,7 @@ tr.archived {
 }
 
 .budget-num.negative {
-  color: var(--color-terracotta);
+  color: var(--danger);
 }
 
 .budget-cap-cell {
@@ -1123,7 +1139,7 @@ tr.archived {
 
 .sweep-rule-note {
   font-size: 0.85rem;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   flex-basis: 100%;
 }
 
@@ -1139,7 +1155,7 @@ tr.archived {
 
 .clamp-note {
   font-size: 0.85rem;
-  color: var(--color-amber);
+  color: var(--warning);
   margin: 0;
 }
 
@@ -1188,7 +1204,7 @@ tr.archived {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .summary-card-value {
@@ -1200,11 +1216,11 @@ tr.archived {
 }
 
 .summary-card-value.positive {
-  color: var(--color-sage);
+  color: var(--accent);
 }
 
 .summary-card-value.negative {
-  color: var(--color-terracotta);
+  color: var(--danger);
 }
 
 .budget-health-list {
@@ -1245,13 +1261,13 @@ tr.archived {
 .budget-health-amounts {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .budget-health-bar {
   height: 5px;
   border-radius: 3px;
-  background-color: var(--color-border);
+  background-color: var(--border);
   overflow: hidden;
 }
 
@@ -1261,19 +1277,19 @@ tr.archived {
 }
 
 .budget-health-item.budget-good .budget-health-bar-fill {
-  background-color: var(--color-sage);
+  background-color: var(--accent);
 }
 
 .budget-health-item.budget-warn .budget-health-bar-fill {
-  background-color: var(--color-amber);
+  background-color: var(--warning);
 }
 
 .budget-health-item.budget-over .budget-health-bar-fill {
-  background-color: var(--color-terracotta);
+  background-color: var(--danger);
 }
 
 .budget-health-item.budget-none .budget-health-bar-fill {
-  background-color: var(--color-text-muted);
+  background-color: var(--text-muted);
 }
 
 .icon-button {
@@ -1290,8 +1306,8 @@ tr.archived {
 }
 
 .chart-tooltip {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.5rem 0.75rem;
   font-size: 0.85rem;
@@ -1301,7 +1317,7 @@ tr.archived {
 }
 
 .chart-tooltip-label {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-size: 0.75rem;
 }
 
@@ -1326,5 +1342,39 @@ tr.archived {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.78rem;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.settings-section h2 {
+  font-size: 1rem;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.settings-field label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.settings-field .type-toggle,
+.settings-field select {
+  max-width: 28rem;
+}
+
+.settings-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
 }

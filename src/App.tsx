@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
 import { getDb } from "./db";
+import { ThemeProvider } from "./lib/ThemeContext";
 import { Sidebar, type ViewName } from "./components/Sidebar";
 import { DashboardPage } from "./pages/DashboardPage";
 import { AccountsPage } from "./pages/AccountsPage";
@@ -11,6 +12,7 @@ import { TransferPage } from "./pages/TransferPage";
 import { BudgetsPage } from "./pages/BudgetsPage";
 import { SavingsPage } from "./pages/SavingsPage";
 import { ImportPage } from "./pages/ImportPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import "./App.css";
 
 type View =
@@ -22,7 +24,8 @@ type View =
   | { name: "transfer" }
   | { name: "budgets" }
   | { name: "savings" }
-  | { name: "import" };
+  | { name: "import" }
+  | { name: "settings" };
 
 function App() {
   const [db, setDb] = useState<Database | null>(null);
@@ -62,36 +65,39 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <Sidebar
-        activeView={activeView}
-        onNavigate={handleNavigate}
-        onQuickAdd={() => setView({ name: "accounts" })}
-      />
+    <ThemeProvider db={db}>
+      <div className="app-shell">
+        <Sidebar
+          activeView={activeView}
+          onNavigate={handleNavigate}
+          onQuickAdd={() => setView({ name: "accounts" })}
+        />
 
-      <main className="app-content">
-        {view.name === "dashboard" && <DashboardPage db={db} />}
-        {view.name === "accounts" && (
-          <AccountsPage
-            db={db}
-            onSelectAccount={(accountId) => setView({ name: "transactions", accountId })}
-          />
-        )}
-        {view.name === "transactions" && (
-          <TransactionsPage
-            db={db}
-            accountId={view.accountId}
-            onBack={() => setView({ name: "accounts" })}
-          />
-        )}
-        {view.name === "categories" && <CategoriesPage db={db} />}
-        {view.name === "payees" && <PayeesPage db={db} />}
-        {view.name === "transfer" && <TransferPage db={db} />}
-        {view.name === "budgets" && <BudgetsPage db={db} />}
-        {view.name === "savings" && <SavingsPage db={db} />}
-        {view.name === "import" && <ImportPage db={db} />}
-      </main>
-    </div>
+        <main className="app-content">
+          {view.name === "dashboard" && <DashboardPage db={db} />}
+          {view.name === "accounts" && (
+            <AccountsPage
+              db={db}
+              onSelectAccount={(accountId) => setView({ name: "transactions", accountId })}
+            />
+          )}
+          {view.name === "transactions" && (
+            <TransactionsPage
+              db={db}
+              accountId={view.accountId}
+              onBack={() => setView({ name: "accounts" })}
+            />
+          )}
+          {view.name === "categories" && <CategoriesPage db={db} />}
+          {view.name === "payees" && <PayeesPage db={db} />}
+          {view.name === "transfer" && <TransferPage db={db} />}
+          {view.name === "budgets" && <BudgetsPage db={db} />}
+          {view.name === "savings" && <SavingsPage db={db} />}
+          {view.name === "import" && <ImportPage db={db} />}
+          {view.name === "settings" && <SettingsPage db={db} />}
+        </main>
+      </div>
+    </ThemeProvider>
   );
 }
 

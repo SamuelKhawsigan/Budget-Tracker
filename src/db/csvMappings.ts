@@ -33,3 +33,21 @@ export async function saveCsvMapping(
   existing[profileName] = mapping;
   await setSetting(db, SETTINGS_KEY, JSON.stringify(existing));
 }
+
+export async function deleteCsvMapping(db: Database, profileName: string): Promise<void> {
+  const existing = await listCsvMappings(db);
+  delete existing[profileName];
+  await setSetting(db, SETTINGS_KEY, JSON.stringify(existing));
+}
+
+export async function renameCsvMapping(
+  db: Database,
+  oldName: string,
+  newName: string,
+): Promise<void> {
+  const existing = await listCsvMappings(db);
+  if (!(oldName in existing) || oldName === newName) return;
+  const { [oldName]: mapping, ...rest } = existing;
+  rest[newName] = mapping;
+  await setSetting(db, SETTINGS_KEY, JSON.stringify(rest));
+}

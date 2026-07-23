@@ -1,7 +1,8 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { CategorySpending } from "../db/dashboard";
 import { fromMinorUnits } from "../lib/money";
-import { getCategoryColor, theme } from "../lib/theme";
+import { getCategoryColor } from "../lib/theme";
+import { useTheme } from "../lib/ThemeContext";
 import { ChartTooltip } from "./ChartTooltip";
 import { CategoryIcon } from "./CategoryIcon";
 
@@ -10,6 +11,8 @@ interface SpendingByCategoryChartProps {
 }
 
 export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) {
+  const { colors } = useTheme();
+
   if (data.length === 0) {
     return <p className="empty-state">No expenses recorded this month.</p>;
   }
@@ -23,7 +26,7 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
               <Cell
                 key={entry.category_id}
                 fill={getCategoryColor({ id: entry.category_id, color: entry.color })}
-                stroke={theme.bg}
+                stroke={colors.bg}
                 strokeWidth={2}
               />
             ))}
