@@ -22,9 +22,10 @@ interface TransactionsPageProps {
   db: Database;
   accountId: number;
   onBack: () => void;
+  onImport: () => void;
 }
 
-export function TransactionsPage({ db, accountId, onBack }: TransactionsPageProps) {
+export function TransactionsPage({ db, accountId, onBack, onImport }: TransactionsPageProps) {
   const [account, setAccount] = useState<Account | null>(null);
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<TransactionWithDetails[]>([]);
@@ -118,16 +119,21 @@ export function TransactionsPage({ db, accountId, onBack }: TransactionsPageProp
 
   return (
     <div className="transactions-page">
-      <div className="page-header">
-        <button type="button" className="back-link" onClick={onBack}>
-          ← Accounts
+      <div className="page-header page-header-with-action">
+        <div>
+          <button type="button" className="back-link" onClick={onBack}>
+            ← Accounts
+          </button>
+          <h1>{account?.name ?? "Account"}</h1>
+          {account && (
+            <p className={"account-balance" + (balance < 0 ? " negative" : "")}>
+              {account.currency} {fromMinorUnits(balance)}
+            </p>
+          )}
+        </div>
+        <button type="button" className="page-header-action" onClick={onImport}>
+          Import transactions…
         </button>
-        <h1>{account?.name ?? "Account"}</h1>
-        {account && (
-          <p className={"account-balance" + (balance < 0 ? " negative" : "")}>
-            {account.currency} {fromMinorUnits(balance)}
-          </p>
-        )}
       </div>
 
       {error && <p className="form-error">{error}</p>}

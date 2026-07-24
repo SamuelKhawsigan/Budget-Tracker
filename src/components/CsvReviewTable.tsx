@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import type { CategoryOption } from "../db/categories";
 import type { ImportCandidateRow } from "../types";
 import { fromMinorUnits } from "../lib/money";
@@ -39,7 +40,7 @@ export function CsvReviewTable({
           const disabled = row.isDuplicate || !!row.parseError;
           const options = categories.filter((c) => c.kind === row.type);
           return (
-            <tr key={row.key} className={disabled ? "archived" : undefined}>
+            <motion.tr layout key={row.key} className={disabled ? "archived" : undefined}>
               <td>
                 <input
                   type="checkbox"
@@ -73,7 +74,7 @@ export function CsvReviewTable({
               <td>
                 {row.parseError ? `Error: ${row.parseError}` : row.isDuplicate ? "Duplicate" : "New"}
               </td>
-            </tr>
+            </motion.tr>
           );
         })}
       </tbody>

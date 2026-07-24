@@ -46,6 +46,12 @@ pub fn run() {
             sql: include_str!("../migrations/0003_savings_sweep_details.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 4,
+            description: "import_batches",
+            sql: include_str!("../migrations/0004_import_batches.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

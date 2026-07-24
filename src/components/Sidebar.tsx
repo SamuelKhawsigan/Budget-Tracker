@@ -39,7 +39,13 @@ const NAV_ITEMS: NavItem[] = [
   { key: "payees", label: "Payees", icon: Users },
   { key: "budgets", label: "Budgets", icon: Target },
   { key: "savings", label: "Savings", icon: PiggyBank },
+];
+
+// A recurring task, not a daily destination — grouped with Settings at the
+// bottom instead of the primary nav.
+const SECONDARY_NAV_ITEMS: NavItem[] = [
   { key: "import", label: "Import", icon: Upload },
+  { key: "settings", label: "Settings", icon: Settings },
 ];
 
 interface SidebarProps {
@@ -70,15 +76,23 @@ export function Sidebar({ activeView, onNavigate, onQuickAdd }: SidebarProps) {
       </ul>
 
       <div className="sidebar-footer">
-        <button
-          type="button"
-          className={"sidebar-link" + (activeView === "settings" ? " active" : "")}
-          onClick={() => onNavigate("settings")}
-          aria-current={activeView === "settings" ? "page" : undefined}
-        >
-          <Settings size={17} />
-          <span>Settings</span>
-        </button>
+        <div className="sidebar-divider" />
+
+        <ul className="sidebar-nav sidebar-secondary-nav">
+          {SECONDARY_NAV_ITEMS.map(({ key, label, icon: Icon }) => (
+            <li key={key}>
+              <button
+                type="button"
+                className={"sidebar-link" + (activeView === key ? " active" : "")}
+                onClick={() => onNavigate(key)}
+                aria-current={activeView === key ? "page" : undefined}
+              >
+                <Icon size={17} />
+                <span>{label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
 
         <button type="button" className="sidebar-quick-add" onClick={onQuickAdd}>
           <Plus size={17} />

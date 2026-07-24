@@ -6,6 +6,10 @@ interface CsvMappingFormProps {
   secondRow: string[] | null;
   existingProfiles: Record<string, CsvMapping>;
   suggestedProfileName: string;
+  // The last mapping submitted in this same import flow — lets going back
+  // from a later step and returning here restore what was typed rather than
+  // resetting to the column-guess defaults.
+  initial: CsvMapping | null;
   onContinue: (profileName: string, mapping: CsvMapping) => void;
 }
 
@@ -14,17 +18,20 @@ export function CsvMappingForm({
   secondRow,
   existingProfiles,
   suggestedProfileName,
+  initial,
   onContinue,
 }: CsvMappingFormProps) {
   const columnCount = firstRow.length;
   const profileNames = Object.keys(existingProfiles);
 
   const [profileName, setProfileName] = useState(suggestedProfileName);
-  const [hasHeader, setHasHeader] = useState(true);
-  const [dateColumn, setDateColumn] = useState(0);
-  const [amountColumn, setAmountColumn] = useState(Math.min(1, columnCount - 1));
-  const [descriptionColumn, setDescriptionColumn] = useState(Math.min(2, columnCount - 1));
-  const [notesColumn, setNotesColumn] = useState<number | "">("");
+  const [hasHeader, setHasHeader] = useState(initial?.hasHeader ?? true);
+  const [dateColumn, setDateColumn] = useState(initial?.dateColumn ?? 0);
+  const [amountColumn, setAmountColumn] = useState(initial?.amountColumn ?? Math.min(1, columnCount - 1));
+  const [descriptionColumn, setDescriptionColumn] = useState(
+    initial?.descriptionColumn ?? Math.min(2, columnCount - 1),
+  );
+  const [notesColumn, setNotesColumn] = useState<number | "">(initial?.notesColumn ?? "");
   const [error, setError] = useState<string | null>(null);
 
   function columnLabel(i: number): string {

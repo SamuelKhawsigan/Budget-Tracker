@@ -1,79 +1,95 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
+import { AnimatePresence, motion } from "framer-motion";
 import { listAccounts, type AccountWithBalance } from "../db/accounts";
 import { listLeafCategories, type CategoryOption } from "../db/categories";
 import { findOrCreatePayee, findPayeesByNames } from "../db/payees";
 import { createImportedTransaction, getExistingImportHashes } from "../db/transactions";
 import { listCsvMappings, saveCsvMapping, type CsvMapping } from "../db/csvMappings";
+import { listRecentImportBatches, recordImportBatch, type ImportBatch } from "../db/importBatches";
 import { parseCsv } from "../lib/csv";
 import { parseImportAmount, parseImportDate } from "../lib/importParsing";
 import { importHashInput, sha256Hex } from "../lib/hash";
-import { pickAndReadCsv } from "../lib/file";
 import type { ImportCandidateRow } from "../types";
 import { CsvMappingForm } from "../components/CsvMappingForm";
 import { CsvReviewTable } from "../components/CsvReviewTable";
+import { ImportStepRail, type ImportStep } from "../components/ImportStepRail";
+import { ImportAccountRow } from "../components/ImportAccountRow";
+import { ImportDropZone } from "../components/ImportDropZone";
+import { AccountPickerModal } from "../components/AccountPickerModal";
 
 interface ImportPageProps {
   db: Database;
+  preselectedAccountId?: number;
+  onNavigateToAccounts: () => void;
+  onNavigateToSettings: () => void;
 }
 
-type Step =
-  | { name: "pick" }
-  | { name: "mapping"; rawRows: string[][]; suggestedProfileName: string }
-  | { name: "review" };
-
-export function ImportPage({ db }: ImportPageProps) {
+export function ImportPage({ db, preselectedAccountId, onNavigateToAccounts, onNavigateToSettings }: ImportPageProps) {
   const [accounts, setAccounts] = useState<AccountWithBalance[]>([]);
-  const [accountId, setAccountId] = useState<number | "">("");
+  const [accountId, setAccountId] = useState<number | "">(preselectedAccountId ?? "");
+  const [accountPickerOpen, setAccountPickerOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [mappingProfiles, setMappingProfiles] = useState<Record<string, CsvMapping>>({});
-  const [step, setStep] = useState<Step>({ name: "pick" });
+  const [recentImports, setRecentImports] = useState<ImportBatch[]>([]);
+
+  const [currentStep, setCurrentStep] = useState<ImportStep>(1);
+  const [furthestStep, setFurthestStep] = useState<ImportStep>(1);
+
+  const [fileName, setFileName] = useState("");
+  const [rawRows, setRawRows] = useState<string[][] | null>(null);
+  const [suggestedProfileName, setSuggestedProfileName] = useState("");
+  const [lastMapping, setLastMapping] = useState<{ profileName: string; mapping: CsvMapping } | null>(null);
   const [rows, setRows] = useState<ImportCandidateRow[]>([]);
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+
+  const refreshRecentImports = useCallback(async () => {
+    setRecentImports(await listRecentImportBatches(db));
+  }, [db]);
 
   useEffect(() => {
     void listAccounts(db, false).then(setAccounts);
     void listLeafCategories(db).then(setCategories);
     void listCsvMappings(db).then(setMappingProfiles);
-  }, [db]);
+    void refreshRecentImports();
+  }, [db, refreshRecentImports]);
 
-  async function handlePickFile() {
+  function goToStep(step: ImportStep) {
+    if (step <= furthestStep) setCurrentStep(step);
+  }
+
+  function handleFilePicked(name: string, text: string) {
     if (accountId === "") {
       setError("Choose an account first");
       return;
     }
     setError(null);
     setSuccess(null);
-    try {
-      const picked = await pickAndReadCsv();
-      if (!picked) return; // user cancelled the dialog
-
-      const parsed = parseCsv(picked.text);
-      if (parsed.length === 0) {
-        setError("That file has no rows");
-        return;
-      }
-
-      const fileName = picked.path.split(/[\\/]/).pop() ?? "Import";
-      const suggestedProfileName = fileName.replace(/\.csv$/i, "");
-
-      setStep({ name: "mapping", rawRows: parsed, suggestedProfileName });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+    const parsed = parseCsv(text);
+    if (parsed.length === 0) {
+      setError("That file has no rows");
+      return;
     }
+    setFileName(name);
+    setRawRows(parsed);
+    setSuggestedProfileName(name.replace(/\.csv$/i, ""));
+    setCurrentStep(2);
+    setFurthestStep((f) => Math.max(f, 2) as ImportStep);
   }
 
   async function handleMappingContinue(profileName: string, mapping: CsvMapping) {
-    if (step.name !== "mapping" || accountId === "") return;
+    if (!rawRows || accountId === "") return;
     setError(null);
 
     try {
       await saveCsvMapping(db, profileName, mapping);
       setMappingProfiles((prev) => ({ ...prev, [profileName]: mapping }));
+      setLastMapping({ profileName, mapping });
 
-      const dataRows = mapping.hasHeader ? step.rawRows.slice(1) : step.rawRows;
+      const dataRows = mapping.hasHeader ? rawRows.slice(1) : rawRows;
       const existingHashes = await getExistingImportHashes(db, accountId);
       const descriptions = dataRows.map((r) => (r[mapping.descriptionColumn] ?? "").trim());
       const payeeMatches = await findPayeesByNames(db, descriptions);
@@ -135,7 +151,8 @@ export function ImportPage({ db }: ImportPageProps) {
       }
 
       setRows(candidates);
-      setStep({ name: "review" });
+      setCurrentStep(3);
+      setFurthestStep((f) => Math.max(f, 3) as ImportStep);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -184,9 +201,14 @@ export function ImportPage({ db }: ImportPageProps) {
         }
       }
 
+      await recordImportBatch(db, accountId, fileName, inserted, skipped + failed);
       setSuccess(`Imported ${inserted} transaction${inserted === 1 ? "" : "s"}. Skipped ${skipped + failed}.`);
-      setStep({ name: "pick" });
+      setCurrentStep(1);
+      setFurthestStep(1);
+      setRawRows(null);
       setRows([]);
+      setFileName("");
+      await refreshRecentImports();
     } finally {
       setImporting(false);
     }
@@ -196,72 +218,168 @@ export function ImportPage({ db }: ImportPageProps) {
   const newCount = rows.filter((r) => r.selected && !r.isDuplicate && !r.parseError).length;
   const duplicateCount = rows.filter((r) => r.isDuplicate).length;
   const errorCount = rows.filter((r) => r.parseError).length;
+  const mappingNames = Object.keys(mappingProfiles).sort((a, b) => a.localeCompare(b));
 
   return (
     <>
       <h1>Import CSV</h1>
 
+      {accounts.length > 0 && (
+        <ImportStepRail currentStep={currentStep} furthestStep={furthestStep} onStepClick={goToStep} />
+      )}
+
       {error && <p className="form-error">{error}</p>}
       {success && <p className="form-success">{success}</p>}
 
-      {step.name === "pick" && (
-        <div className="inline-form">
-          <h2>Choose file</h2>
-          <label>
-            Account
-            <select
-              value={accountId}
-              onChange={(e) => setAccountId(e.currentTarget.value === "" ? "" : Number(e.currentTarget.value))}
-            >
-              <option value="">Choose an account</option>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="button" onClick={handlePickFile} disabled={accountId === ""}>
-            Choose CSV file…
+      {accounts.length === 0 ? (
+        <div className="card import-empty-card">
+          <p className="empty-state">You need an account before you can import transactions.</p>
+          <button type="button" className="btn-primary" onClick={onNavigateToAccounts}>
+            Go to Accounts
           </button>
         </div>
+      ) : (
+        <AnimatePresence mode="wait">
+          {currentStep === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="import-step1-layout"
+            >
+              <div className="import-step1-main">
+                <div className="card">
+                  <h2>Import into</h2>
+                  <ImportAccountRow account={selectedAccount} onOpenPicker={() => setAccountPickerOpen(true)} />
+                </div>
+
+                <ImportDropZone
+                  disabled={accountId === ""}
+                  onFilePicked={handleFilePicked}
+                  onError={setError}
+                />
+                {accountId === "" && <p className="import-drop-zone-hint">Choose an account above first.</p>}
+              </div>
+
+              <div className="import-step1-side">
+                <div className="card import-recent-card">
+                  <h2>Recent imports</h2>
+                  {recentImports.length === 0 ? (
+                    <p className="empty-state">No imports yet.</p>
+                  ) : (
+                    <ul className="entity-list">
+                      {recentImports.map((b) => (
+                        <li key={b.id} className="entity-row import-recent-row">
+                          <div className="entity-row-main">
+                            <span className="entity-row-title">{b.file_name}</span>
+                            <span className="entity-row-meta">
+                              {b.account_name} · {b.created_at.slice(0, 10)}
+                            </span>
+                          </div>
+                          <span className="import-recent-counts">
+                            <span className="positive">{b.inserted_count} added</span>
+                            {b.skipped_count > 0 && (
+                              <span className="import-recent-skipped"> · {b.skipped_count} skipped</span>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="card import-mappings-card">
+                  <h2>Saved mappings</h2>
+                  {mappingNames.length === 0 ? (
+                    <p className="empty-state">None saved yet.</p>
+                  ) : (
+                    <div className="import-mapping-chips">
+                      {mappingNames.map((name) => (
+                        <span key={name} className="pill import-mapping-chip">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <button type="button" className="link-button import-manage-link" onClick={onNavigateToSettings}>
+                    Manage in Settings →
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {currentStep === 2 && rawRows && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="card import-step-card"
+            >
+              <CsvMappingForm
+                firstRow={rawRows[0]}
+                secondRow={rawRows[1] ?? null}
+                existingProfiles={mappingProfiles}
+                suggestedProfileName={lastMapping?.profileName ?? suggestedProfileName}
+                initial={lastMapping?.mapping ?? null}
+                onContinue={handleMappingContinue}
+              />
+            </motion.div>
+          )}
+
+          {currentStep === 3 && selectedAccount && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="card import-review-card"
+            >
+              <div className="import-review-summary">
+                <span>{newCount} new</span>
+                <span>
+                  {duplicateCount} duplicate{duplicateCount === 1 ? "" : "s"} (skipped)
+                </span>
+                {errorCount > 0 && <span className="negative">{errorCount} couldn't be parsed</span>}
+              </div>
+              <div className="import-review-table-wrap">
+                <CsvReviewTable
+                  rows={rows}
+                  categories={categories}
+                  currency={selectedAccount.currency}
+                  onToggleSelected={handleToggleSelected}
+                  onCategoryChange={handleCategoryChange}
+                />
+              </div>
+              <div className="transaction-form-actions">
+                <button type="button" onClick={() => void handleCommit()} disabled={importing || newCount === 0}>
+                  {importing ? "Importing…" : `Commit import (${newCount})`}
+                </button>
+                <button type="button" onClick={() => goToStep(1)}>
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       )}
 
-      {step.name === "mapping" && (
-        <CsvMappingForm
-          firstRow={step.rawRows[0]}
-          secondRow={step.rawRows[1] ?? null}
-          existingProfiles={mappingProfiles}
-          suggestedProfileName={step.suggestedProfileName}
-          onContinue={handleMappingContinue}
+      {accountPickerOpen && (
+        <AccountPickerModal
+          title="Import into"
+          accounts={accounts}
+          excludeId={null}
+          onSelect={(id) => {
+            setAccountId(id);
+            setAccountPickerOpen(false);
+          }}
+          onClose={() => setAccountPickerOpen(false)}
         />
-      )}
-
-      {step.name === "review" && selectedAccount && (
-        <>
-          <p className="cash-summary">
-            <span>{newCount} new</span>
-            <span>
-              {duplicateCount} duplicate{duplicateCount === 1 ? "" : "s"} (skipped)
-            </span>
-            {errorCount > 0 && <span className="negative">{errorCount} couldn't be parsed</span>}
-          </p>
-          <CsvReviewTable
-            rows={rows}
-            categories={categories}
-            currency={selectedAccount.currency}
-            onToggleSelected={handleToggleSelected}
-            onCategoryChange={handleCategoryChange}
-          />
-          <div className="transaction-form-actions">
-            <button type="button" onClick={handleCommit} disabled={importing || newCount === 0}>
-              {importing ? "Importing…" : `Commit import (${newCount})`}
-            </button>
-            <button type="button" onClick={() => setStep({ name: "pick" })}>
-              Cancel
-            </button>
-          </div>
-        </>
       )}
     </>
   );

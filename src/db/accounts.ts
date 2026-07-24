@@ -108,5 +108,6 @@ export async function deleteAccountCascade(db: Database, id: number): Promise<vo
   }
 
   await db.execute("DELETE FROM settings WHERE key = 'savings_account_id' AND value = ?", [String(id)]);
+  await db.execute("DELETE FROM import_batches WHERE account_id = ?", [id]);
   await db.execute("DELETE FROM accounts WHERE id = ?", [id]);
 }

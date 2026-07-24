@@ -10,11 +10,15 @@ import { deleteBudget, setBudget } from "./budgets";
 import { undoSweep } from "./savings";
 import { createTransfer, deleteTransfer } from "./transfers";
 
-// Load the WASM binary and the real migration schema so the test DB is exactly
-// the shipping schema (FKs and all) — no hand-maintained duplicate to drift.
+// Load the WASM binary and every real migration (schema-affecting ones; the
+// data-only seed is skipped) so the test DB is exactly the shipping schema
+// (FKs and all) — no hand-maintained duplicate to drift out of sync.
 const require = createRequire(import.meta.url);
 const wasmBinary = readFileSync(require.resolve("sql.js/dist/sql-wasm.wasm"));
-const schema = readFileSync(new URL("../../src-tauri/migrations/0001_init.sql", import.meta.url), "utf8");
+const MIGRATION_FILES = ["0001_init.sql", "0003_savings_sweep_details.sql", "0004_import_batches.sql"];
+const schema = MIGRATION_FILES.map((f) =>
+  readFileSync(new URL(`../../src-tauri/migrations/${f}`, import.meta.url), "utf8"),
+).join("\n");
 const sqlReady = initSqlJs({ wasmBinary });
 
 // Adapter presenting sql.js through the same execute/select surface the app's

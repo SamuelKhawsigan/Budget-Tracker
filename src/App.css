@@ -737,6 +737,19 @@ button:focus-visible {
   margin: 0;
 }
 
+.page-header-with-action {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.page-header-action {
+  flex: none;
+  font-size: 0.85rem;
+}
+
 .account-balance {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -897,6 +910,16 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background-color: var(--border);
+  margin: var(--space-2) 0;
+}
+
+.sidebar-secondary-nav {
+  flex: none;
 }
 
 .sidebar-quick-add {
@@ -2803,4 +2826,259 @@ tr.archived {
 .savings-history-amount {
   font-weight: 600;
   flex: none;
+}
+
+/* Import page -------------------------------------------------------------- */
+
+.import-step-rail {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.import-step-rail-item {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.import-step-rail-item:last-child {
+  flex: none;
+}
+
+.import-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: var(--text-muted);
+  flex: none;
+}
+
+.import-step:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.import-step-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  flex: none;
+}
+
+.import-step.current .import-step-marker {
+  border-color: var(--accent);
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.import-step.current .import-step-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.import-step.completed .import-step-marker {
+  border-color: var(--accent);
+  background-color: var(--accent);
+  color: var(--bg);
+}
+
+.import-step-label {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.import-step-connector {
+  flex: 1;
+  height: 1px;
+  background-color: var(--border);
+  margin: 0 var(--space-3);
+}
+
+.import-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.import-step1-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .import-step1-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.import-step1-main,
+.import-step1-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.import-account-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  text-align: left;
+}
+
+.import-account-row:hover {
+  border-color: var(--accent);
+}
+
+.import-account-icon-well {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  flex: none;
+}
+
+.import-account-name {
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-account-placeholder {
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.import-account-balance {
+  font-weight: 600;
+  flex: none;
+}
+
+.import-account-chevron {
+  color: var(--text-muted);
+  flex: none;
+}
+
+.import-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 12rem;
+  padding: var(--space-6);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+}
+
+.import-drop-zone.drag-over {
+  border-color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent);
+}
+
+.import-drop-zone.disabled {
+  opacity: 0.5;
+}
+
+.import-drop-zone-text {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.import-drop-zone-or {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.import-drop-zone-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+}
+
+.import-recent-card h2,
+.import-mappings-card h2 {
+  margin-bottom: var(--space-3);
+}
+
+.import-recent-counts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.78rem;
+  flex: none;
+}
+
+.import-recent-skipped {
+  color: var(--text-muted);
+}
+
+.import-mapping-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.import-manage-link {
+  font-size: 0.8rem;
+}
+
+.import-review-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 60vh;
+}
+
+.import-review-summary {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  flex: none;
+}
+
+.import-review-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* The mapping form already carries .inline-form's own card chrome — strip it
+   so nesting inside the step card doesn't double up borders/background. */
+.import-step-card .csv-mapping-form {
+  padding: 0;
+  border: none;
+  background: none;
 }

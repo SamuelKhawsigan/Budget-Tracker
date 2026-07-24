@@ -26,7 +26,7 @@ type View =
   | { name: "transfer" }
   | { name: "budgets" }
   | { name: "savings" }
-  | { name: "import" }
+  | { name: "import"; accountId?: number }
   | { name: "settings" };
 
 function App() {
@@ -91,6 +91,7 @@ function App() {
               db={db}
               accountId={view.accountId}
               onBack={() => setView({ name: "accounts" })}
+              onImport={() => setView({ name: "import", accountId: view.accountId })}
             />
           )}
           {view.name === "categories" && <CategoriesPage db={db} />}
@@ -110,7 +111,14 @@ function App() {
           {view.name === "transfer" && <TransferPage db={db} />}
           {view.name === "budgets" && <BudgetsPage db={db} />}
           {view.name === "savings" && <SavingsPage db={db} />}
-          {view.name === "import" && <ImportPage db={db} />}
+          {view.name === "import" && (
+            <ImportPage
+              db={db}
+              preselectedAccountId={view.accountId}
+              onNavigateToAccounts={() => setView({ name: "accounts" })}
+              onNavigateToSettings={() => setView({ name: "settings" })}
+            />
+          )}
           {view.name === "settings" && <SettingsPage db={db} />}
         </main>
       </div>
