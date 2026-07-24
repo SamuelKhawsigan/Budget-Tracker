@@ -16,7 +16,7 @@ import type { AccountWithBalance } from "../db/accounts";
 import type { AccountType } from "../types";
 import { fromMinorUnits } from "../lib/money";
 
-const TYPE_ICONS: Record<AccountType, LucideIcon> = {
+export const ACCOUNT_TYPE_ICONS: Record<AccountType, LucideIcon> = {
   checking: Wallet,
   savings: PiggyBank,
   credit: CreditCard,
@@ -45,7 +45,7 @@ export function AccountTile({
   onArchiveToggle,
   onDelete,
 }: AccountTileProps) {
-  const Icon = TYPE_ICONS[account.type] ?? Landmark;
+  const Icon = ACCOUNT_TYPE_ICONS[account.type] ?? Landmark;
   const [whole, frac] = fromMinorUnits(account.balance).split(".");
   const hasActions = !!(onEdit || onArchiveToggle || onDelete);
 

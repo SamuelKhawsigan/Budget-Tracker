@@ -1,9 +1,10 @@
+import type { MouseEvent } from "react";
 import type { LucideIcon } from "lucide-react";
 
 interface RowActionButtonProps {
   icon: LucideIcon;
   label: string;
-  onClick: () => void;
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
   danger?: boolean;
 }
 

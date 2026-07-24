@@ -32,6 +32,21 @@ export async function listCategories(db: Database, includeArchived = false): Pro
   );
 }
 
+// Per-leaf-category activity for a month, both kinds together (a category's
+// own kind already fixes which transactions can reference it, so no WHERE on
+// kind is needed). Callers sum leaf amounts by parent_id for a group total.
+export async function getCategoryActivity(db: Database, month: string): Promise<Map<number, number>> {
+  const rows = await db.select<{ category_id: number; amount: number }[]>(
+    `SELECT c.id as category_id, SUM(ABS(t.amount)) as amount
+     FROM transactions t
+     JOIN categories c ON c.id = t.category_id
+     WHERE t.type IN ('expense', 'income') AND strftime('%Y-%m', t.date) = ?
+     GROUP BY c.id`,
+    [month],
+  );
+  return new Map(rows.map((r) => [r.category_id, r.amount]));
+}
+
 export interface CategoryGroupInput {
   name: string;
   kind: "income" | "expense";

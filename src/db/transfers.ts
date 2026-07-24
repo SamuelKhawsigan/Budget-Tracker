@@ -1,5 +1,70 @@
 import type Database from "@tauri-apps/plugin-sql";
 
+export interface TransferRecord {
+  id: number; // the outgoing leg's id — what deleteTransfer expects
+  date: string;
+  amount: number; // positive minor units
+  notes: string | null;
+  fromAccountId: number;
+  fromAccountName: string;
+  toAccountId: number;
+  toAccountName: string;
+  isSweep: boolean;
+}
+
+// One row per transfer (matches only the outgoing/negative leg, then joins
+// to its partner via transfer_id) so the two linked transaction rows never
+// show up as two separate history entries. savings_sweeps.transfer_id points
+// at the outgoing leg, so a LEFT JOIN there tells manual transfers apart from
+// sweeps without duplicating any sweep-specific data here.
+export async function listTransfers(db: Database, limit = 100): Promise<TransferRecord[]> {
+  const rows = await db.select<
+    {
+      id: number;
+      date: string;
+      amount: number;
+      notes: string | null;
+      from_account_id: number;
+      from_account_name: string;
+      to_account_id: number;
+      to_account_name: string;
+      is_sweep: number;
+    }[]
+  >(
+    `SELECT
+       t.id AS id,
+       t.date AS date,
+       ABS(t.amount) AS amount,
+       t.notes AS notes,
+       t.account_id AS from_account_id,
+       fa.name AS from_account_name,
+       partner.account_id AS to_account_id,
+       ta.name AS to_account_name,
+       CASE WHEN ss.id IS NOT NULL THEN 1 ELSE 0 END AS is_sweep
+     FROM transactions t
+     JOIN transactions partner ON partner.id = t.transfer_id
+     JOIN accounts fa ON fa.id = t.account_id
+     JOIN accounts ta ON ta.id = partner.account_id
+     LEFT JOIN savings_sweeps ss ON ss.transfer_id = t.id
+     WHERE t.type = 'transfer' AND t.amount < 0
+     ORDER BY t.date DESC, t.id DESC
+     LIMIT ?`,
+    [limit],
+  );
+
+  return rows.map((r) => ({
+    id: r.id,
+    date: r.date,
+    amount: r.amount,
+    notes: r.notes,
+    fromAccountId: r.from_account_id,
+    fromAccountName: r.from_account_name,
+    toAccountId: r.to_account_id,
+    toAccountName: r.to_account_name,
+    isSweep: r.is_sweep === 1,
+  }));
+}
+
 export interface TransferInput {
   fromAccountId: number;
   toAccountId: number;
