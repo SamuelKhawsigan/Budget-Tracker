@@ -57,6 +57,33 @@ export async function listTransactions(
   );
 }
 
+export interface PayeeTransactionRow {
+  id: number;
+  account_id: number;
+  account_name: string;
+  currency: string;
+  date: string;
+  amount: number;
+  type: "income" | "expense";
+  category_name: string | null;
+  notes: string | null;
+}
+
+// A payee isn't scoped to one account, so this spans all of them (unlike
+// listTransactions) — feeds the payee tile's "drill through" view.
+export async function listTransactionsByPayee(db: Database, payeeId: number): Promise<PayeeTransactionRow[]> {
+  return db.select<PayeeTransactionRow[]>(
+    `SELECT t.id, t.account_id, a.name as account_name, a.currency as currency,
+            t.date, t.amount, t.type, c.name as category_name, t.notes
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     LEFT JOIN categories c ON c.id = t.category_id
+     WHERE t.payee_id = ? AND t.type != 'transfer'
+     ORDER BY t.date DESC, t.id DESC`,
+    [payeeId],
+  );
+}
+
 export interface TransactionInput {
   accountId: number;
   date: string;

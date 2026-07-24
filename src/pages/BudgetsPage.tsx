@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
+import { AnimatePresence, motion } from "framer-motion";
+import { Plus } from "lucide-react";
 import {
   deleteBudget,
   getMonthCashSummary,
@@ -8,12 +10,15 @@ import {
   type CategoryBudgetSummary,
   type MonthCashSummary,
 } from "../db/budgets";
+import type { CategoryOption } from "../db/categories";
 import { getSetting } from "../db/settings";
-import { BudgetCategoryRow } from "../components/BudgetCategoryRow";
+import { BudgetAllocationSummary } from "../components/BudgetAllocationSummary";
+import { BudgetedCategoryCard } from "../components/BudgetedCategoryCard";
+import { UnbudgetedChip } from "../components/UnbudgetedChip";
+import { AddBudgetPopover } from "../components/AddBudgetPopover";
 import { MonthNav } from "../components/MonthNav";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useDeleteFlow } from "../lib/useDeleteFlow";
-import { fromMinorUnits } from "../lib/money";
 import { currentMonth, monthLabel, shiftMonth } from "../lib/month";
 
 interface BudgetsPageProps {
@@ -25,6 +30,7 @@ export function BudgetsPage({ db }: BudgetsPageProps) {
   const [summaries, setSummaries] = useState<CategoryBudgetSummary[]>([]);
   const [cash, setCash] = useState<MonthCashSummary | null>(null);
   const [budgetingMode, setBudgetingMode] = useState("available");
+  const [addBudgetAnchor, setAddBudgetAnchor] = useState<DOMRect | null>(null);
   const [error, setError] = useState<string | null>(null);
   const del = useDeleteFlow(setError);
 
@@ -55,6 +61,11 @@ export function BudgetsPage({ db }: BudgetsPageProps) {
     }
   }
 
+  async function handleAddBudgetSubmit(categoryId: number, amount: number) {
+    await handleSaveBudget(categoryId, amount);
+    setAddBudgetAnchor(null);
+  }
+
   function handleDeleteRequest(summary: CategoryBudgetSummary) {
     setError(null);
     del.request({
@@ -73,6 +84,18 @@ export function BudgetsPage({ db }: BudgetsPageProps) {
     });
   }
 
+  const budgeted = summaries.filter((s) => s.cap != null);
+  const notBudgeted = summaries.filter((s) => s.cap == null);
+  const totalCap = budgeted.reduce((sum, s) => sum + (s.cap ?? 0), 0);
+  const unbudgetedOptions: CategoryOption[] = notBudgeted.map((s) => ({
+    id: s.category_id,
+    name: s.category_name,
+    kind: "expense",
+    group_name: s.group_name,
+    color: s.color,
+    icon: s.icon,
+  }));
+
   return (
     <>
       <h1>Budgets</h1>
@@ -82,45 +105,81 @@ export function BudgetsPage({ db }: BudgetsPageProps) {
       {error && <p className="form-error">{error}</p>}
 
       {budgetingMode === "available" && cash && (
-        <div className="cash-summary">
-          <span>
-            Income <span className="figure">{fromMinorUnits(cash.income)}</span>
-          </span>
-          <span>
-            Spent <span className="figure">{fromMinorUnits(cash.expense)}</span>
-          </span>
-          <span className={cash.available < 0 ? "negative" : "positive"}>
-            Available to budget <span className="figure">{fromMinorUnits(cash.available)}</span>
-          </span>
-        </div>
+        <BudgetAllocationSummary income={cash.income} totalCap={totalCap} spent={cash.expense} />
       )}
 
-      <div className="card">
-        {summaries.length === 0 ? (
+      {summaries.length === 0 ? (
+        <div className="card">
           <p className="empty-state">No expense categories yet — add some in Categories.</p>
-        ) : (
-          <>
-            <div className="budget-head">
-              <span />
-              <span>Category</span>
-              <span className="budget-num">Cap</span>
-              <span className="budget-num">Spent</span>
-              <span className="budget-num">Remaining</span>
-              <span />
+        </div>
+      ) : (
+        <>
+          {budgeted.length === 0 ? (
+            <div className="card budget-empty-card">
+              <p className="empty-state">No budgets set for {monthLabel(month)} yet.</p>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={(e) => setAddBudgetAnchor(e.currentTarget.getBoundingClientRect())}
+              >
+                Set your first budget
+              </button>
             </div>
-            <ul className="entity-list">
-              {summaries.map((s) => (
-                <BudgetCategoryRow
-                  key={s.category_id}
-                  summary={s}
-                  onSave={handleSaveBudget}
-                  onDelete={handleDeleteRequest}
-                />
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
+          ) : (
+            <section className="budget-section">
+              <h2>Budgeted · {budgeted.length}</h2>
+              <motion.div layout className="budget-grid">
+                <AnimatePresence>
+                  {budgeted.map((s, i) => (
+                    <BudgetedCategoryCard
+                      key={s.category_id}
+                      summary={s}
+                      index={i}
+                      onSaveCap={handleSaveBudget}
+                      onRemove={handleDeleteRequest}
+                    />
+                  ))}
+                  <motion.button
+                    key="add-budget"
+                    type="button"
+                    layout
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: budgeted.length * 0.03 }}
+                    className="card budget-card budget-add-card"
+                    onClick={(e) => setAddBudgetAnchor(e.currentTarget.getBoundingClientRect())}
+                  >
+                    <Plus size={22} />
+                    <span>Add a budget</span>
+                  </motion.button>
+                </AnimatePresence>
+              </motion.div>
+            </section>
+          )}
+
+          {notBudgeted.length > 0 && (
+            <section className="budget-section">
+              <h2>Not budgeted · {notBudgeted.length}</h2>
+              <motion.div layout className="budget-chip-row">
+                <AnimatePresence>
+                  {notBudgeted.map((s) => (
+                    <UnbudgetedChip key={s.category_id} summary={s} onSave={handleSaveBudget} />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            </section>
+          )}
+        </>
+      )}
+
+      {addBudgetAnchor && (
+        <AddBudgetPopover
+          categories={unbudgetedOptions}
+          anchorRect={addBudgetAnchor}
+          onSubmit={handleAddBudgetSubmit}
+          onClose={() => setAddBudgetAnchor(null)}
+        />
+      )}
 
       {del.pending && (
         <ConfirmDialog

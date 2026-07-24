@@ -40,6 +40,12 @@ pub fn run() {
             sql: include_str!("../migrations/0002_seed.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "savings_sweep_details",
+            sql: include_str!("../migrations/0003_savings_sweep_details.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

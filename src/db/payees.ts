@@ -5,6 +5,11 @@ export async function listPayees(db: Database): Promise<Payee[]> {
   return db.select<Payee[]>("SELECT * FROM payees WHERE is_archived = 0 ORDER BY name");
 }
 
+export async function getPayee(db: Database, id: number): Promise<Payee | null> {
+  const rows = await db.select<Payee[]>("SELECT * FROM payees WHERE id = ?", [id]);
+  return rows[0] ?? null;
+}
+
 export async function listAllPayees(db: Database, includeArchived = false): Promise<Payee[]> {
   return db.select<Payee[]>(
     includeArchived
@@ -78,6 +83,37 @@ export async function updatePayee(db: Database, id: number, input: PayeeInput): 
     input.defaultCategoryId,
     id,
   ]);
+}
+
+// Lighter than updatePayee — used by the tile's inline category pill and the
+// bulk-assign view, neither of which should touch the payee's name.
+export async function setPayeeDefaultCategory(
+  db: Database,
+  id: number,
+  categoryId: number | null,
+): Promise<void> {
+  await db.execute("UPDATE payees SET default_category_id = ? WHERE id = ?", [categoryId, id]);
+}
+
+export interface PayeeStats {
+  count: number;
+  total: number; // signed minor units (income positive, expense negative)
+  lastUsed: string | null; // 'YYYY-MM-DD'
+}
+
+// One row per payee with transactions (payees with none just get no entry —
+// callers default to zero/null). type != 'transfer' since payee_id is never
+// set on a transfer leg anyway, but this keeps the intent explicit.
+export async function getPayeeStats(db: Database): Promise<Map<number, PayeeStats>> {
+  const rows = await db.select<{ payee_id: number; count: number; total: number; last_used: string }[]>(
+    `SELECT payee_id, COUNT(*) as count, SUM(amount) as total, MAX(date) as last_used
+     FROM transactions
+     WHERE payee_id IS NOT NULL AND type != 'transfer'
+     GROUP BY payee_id`,
+  );
+  return new Map(
+    rows.map((r) => [r.payee_id, { count: r.count, total: r.total, lastUsed: r.last_used }]),
+  );
 }
 
 export async function setPayeeArchived(db: Database, id: number, archived: boolean): Promise<void> {

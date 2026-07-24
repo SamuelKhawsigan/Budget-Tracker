@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
 import { listAccounts, type AccountWithBalance } from "../db/accounts";
-import { getSetting } from "../db/settings";
+import { getSetting, setSetting } from "../db/settings";
 import {
   closeMonth,
   getProjectedSavings,
   getSweepForMonth,
+  listSavingsSweeps,
   undoSweep,
   type ProjectedSavings,
   type SavingsSweep,
@@ -13,9 +14,11 @@ import {
 } from "../db/savings";
 import { currentMonth, monthLabel, shiftMonth } from "../lib/month";
 import { fromMinorUnits } from "../lib/money";
-import { MonthNav } from "../components/MonthNav";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import { AccountTile } from "../components/AccountTile";
+import { SavingsSettingsPills } from "../components/SavingsSettingsPills";
+import { SavingsHeroCard, type RecentSweepMonth } from "../components/SavingsHeroCard";
+import { SavingsThisMonthCard } from "../components/SavingsThisMonthCard";
+import { SavingsHistoryCard } from "../components/SavingsHistoryCard";
 import { useDeleteFlow } from "../lib/useDeleteFlow";
 
 interface SavingsPageProps {
@@ -29,6 +32,7 @@ export function SavingsPage({ db }: SavingsPageProps) {
   const [sweepRule, setSweepRule] = useState<SweepRule>("net");
   const [projected, setProjected] = useState<ProjectedSavings | null>(null);
   const [existingSweep, setExistingSweep] = useState<SavingsSweep | null>(null);
+  const [allSweeps, setAllSweeps] = useState<SavingsSweep[]>([]);
   const [sourceAccountId, setSourceAccountId] = useState<number | "">("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -56,10 +60,15 @@ export function SavingsPage({ db }: SavingsPageProps) {
     setExistingSweep(sweep);
   }, [db, month, sweepRule]);
 
+  const refreshSweeps = useCallback(async () => {
+    setAllSweeps(await listSavingsSweeps(db));
+  }, [db]);
+
   useEffect(() => {
     void refreshAccounts();
     void refreshSettings();
-  }, [refreshAccounts, refreshSettings]);
+    void refreshSweeps();
+  }, [refreshAccounts, refreshSettings, refreshSweeps]);
 
   useEffect(() => {
     void refreshMonth();
@@ -73,14 +82,42 @@ export function SavingsPage({ db }: SavingsPageProps) {
     }
   }, [accounts, savingsAccountId, sourceAccountId]);
 
+  const recentMonths: RecentSweepMonth[] = useMemo(() => {
+    const end = currentMonth();
+    const months = Array.from({ length: 6 }, (_, i) => shiftMonth(end, -(5 - i)));
+    return months.map((m) => ({ month: m, amount: allSweeps.find((s) => s.month === m)?.amount ?? 0 }));
+  }, [allSweeps]);
+
+  async function handleSelectSavingsAccount(id: number) {
+    setError(null);
+    try {
+      await setSetting(db, "savings_account_id", String(id));
+      setSavingsAccountId(id);
+      if (sourceAccountId === id) setSourceAccountId("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function handleSelectRule(rule: SweepRule) {
+    setError(null);
+    try {
+      await setSetting(db, "sweep_rule", rule);
+      setSweepRule(rule);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   async function handleCloseMonth() {
     if (savingsAccountId === "" || sourceAccountId === "" || !projected) return;
     setError(null);
     setSuccess(null);
     try {
-      await closeMonth(db, month, sourceAccountId, savingsAccountId, projected.swept);
+      const clamped = projected.rawLeftover > projected.availableCash;
+      await closeMonth(db, month, sourceAccountId, savingsAccountId, projected.swept, sweepRule, clamped);
       setSuccess(`Swept ${fromMinorUnits(projected.swept)} to savings for ${monthLabel(month)}.`);
-      await Promise.all([refreshMonth(), refreshAccounts()]);
+      await Promise.all([refreshMonth(), refreshAccounts(), refreshSweeps()]);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -102,7 +139,7 @@ export function SavingsPage({ db }: SavingsPageProps) {
       ),
       run: async () => {
         await undoSweep(db, month);
-        await Promise.all([refreshMonth(), refreshAccounts()]);
+        await Promise.all([refreshMonth(), refreshAccounts(), refreshSweeps()]);
       },
     });
   }
@@ -111,85 +148,38 @@ export function SavingsPage({ db }: SavingsPageProps) {
 
   return (
     <>
-      <h1>Savings</h1>
-
-      <div className="inline-form savings-account-display">
-        <h2>Savings account</h2>
-        {savingsAccount ? (
-          <div className="savings-account-tile-wrap">
-            <AccountTile account={savingsAccount} />
-          </div>
-        ) : (
-          <span className="empty-state">Not set — choose one in Settings.</span>
-        )}
-        <span className="sweep-rule-note">
-          Rule:{" "}
-          {sweepRule === "positive"
-            ? "positive (categories under budget only)"
-            : "net (total budgeted − total spent)"}
-        </span>
+      <div className="page-header-row savings-page-header">
+        <h1>Savings</h1>
+        <SavingsSettingsPills
+          accounts={accounts}
+          savingsAccount={savingsAccount}
+          sweepRule={sweepRule}
+          onSelectAccount={(id) => void handleSelectSavingsAccount(id)}
+          onSelectRule={(rule) => void handleSelectRule(rule)}
+        />
       </div>
 
       {error && <p className="form-error">{error}</p>}
       {success && <p className="form-success">{success}</p>}
 
-      <MonthNav month={month} onChange={setMonth} shift={shiftMonth} />
+      <SavingsHeroCard balance={savingsAccount?.balance ?? null} sweeps={allSweeps} recentMonths={recentMonths} />
 
-      {projected && (
-        <div className="cash-summary">
-          <span>Budgeted leftover: {fromMinorUnits(projected.rawLeftover)}</span>
-          <span>Available cash: {fromMinorUnits(projected.availableCash)}</span>
-          <span className="positive">Projected savings this month: {fromMinorUnits(projected.swept)}</span>
-        </div>
-      )}
-      {projected && projected.rawLeftover > projected.availableCash && (
-        <p className="clamp-note">Clamped to real cash available this month.</p>
-      )}
+      <div className="savings-layout">
+        <SavingsThisMonthCard
+          month={month}
+          onMonthChange={setMonth}
+          projected={projected}
+          existingSweep={existingSweep}
+          accounts={accounts}
+          savingsAccountId={savingsAccountId}
+          sourceAccountId={sourceAccountId}
+          onSourceAccountChange={setSourceAccountId}
+          onCloseMonth={() => void handleCloseMonth()}
+          onUndoRequest={handleUndoRequest}
+        />
 
-      {existingSweep ? (
-        <div className="inline-form swept-notice">
-          <div>
-            <h2>Swept</h2>
-            <p className="empty-state">
-              {monthLabel(month)} swept — <span className="figure">{fromMinorUnits(existingSweep.amount)}</span>{" "}
-              moved to savings.
-            </p>
-          </div>
-          <button type="button" className="btn-danger" onClick={handleUndoRequest}>
-            Undo sweep
-          </button>
-        </div>
-      ) : (
-        <div className="inline-form">
-          <h2>Close month</h2>
-          <label>
-            From account
-            <select
-              value={sourceAccountId}
-              onChange={(e) => setSourceAccountId(Number(e.currentTarget.value))}
-            >
-              <option value="" disabled>
-                Choose account
-              </option>
-              {accounts
-                .filter((a) => a.id !== savingsAccountId)
-                .map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={handleCloseMonth}
-            disabled={savingsAccountId === "" || sourceAccountId === "" || !projected || projected.swept <= 0}
-          >
-            Close month &amp; sweep {projected ? fromMinorUnits(projected.swept) : ""}
-          </button>
-        </div>
-      )}
+        <SavingsHistoryCard sweeps={allSweeps} />
+      </div>
 
       {del.pending && (
         <ConfirmDialog

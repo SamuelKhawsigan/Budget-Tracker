@@ -1,35 +1,53 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
+import { AnimatePresence, motion } from "framer-motion";
+import { Plus } from "lucide-react";
 import {
   createPayee,
   deletePayee,
   getPayeeDependencyInfo,
+  getPayeeStats,
   listAllPayees,
   setPayeeArchived,
+  setPayeeDefaultCategory,
   updatePayee,
-  type PayeeInput,
+  type PayeeStats,
 } from "../db/payees";
 import { listLeafCategories, type CategoryOption } from "../db/categories";
 import type { Payee } from "../types";
-import { PayeeForm } from "../components/PayeeForm";
-import { PayeeList } from "../components/PayeeList";
+import { PayeeTile } from "../components/PayeeTile";
+import {
+  PayeeEditorPopover,
+  type PayeePopoverTarget,
+  type PayeePopoverValues,
+} from "../components/PayeeEditorPopover";
+import { PayeeBulkAssignModal } from "../components/PayeeBulkAssignModal";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useDeleteFlow } from "../lib/useDeleteFlow";
 
 interface PayeesPageProps {
   db: Database;
+  onSelectPayee: (id: number) => void;
 }
 
-export function PayeesPage({ db }: PayeesPageProps) {
+type SortMode = "name" | "most-used" | "recent";
+
+export function PayeesPage({ db, onSelectPayee }: PayeesPageProps) {
   const [payees, setPayees] = useState<Payee[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [stats, setStats] = useState<Map<number, PayeeStats>>(new Map());
   const [showArchived, setShowArchived] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortMode>("name");
+  const [popover, setPopover] = useState<{ target: PayeePopoverTarget; anchorRect: DOMRect } | null>(null);
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const del = useDeleteFlow(setError);
 
   const refresh = useCallback(async () => {
-    setPayees(await listAllPayees(db, showArchived));
+    const [list, statsMap] = await Promise.all([listAllPayees(db, showArchived), getPayeeStats(db)]);
+    setPayees(list);
+    setStats(statsMap);
   }, [db, showArchived]);
 
   useEffect(() => {
@@ -37,15 +55,55 @@ export function PayeesPage({ db }: PayeesPageProps) {
     void listLeafCategories(db).then(setCategories);
   }, [db, refresh]);
 
-  async function handleSubmit(values: PayeeInput) {
+  const visiblePayees = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const filtered = query ? payees.filter((p) => p.name.toLowerCase().includes(query)) : payees;
+
+    const sorted = [...filtered];
+    if (sort === "name") {
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sort === "most-used") {
+      sorted.sort((a, b) => (stats.get(b.id)?.count ?? 0) - (stats.get(a.id)?.count ?? 0));
+    } else {
+      sorted.sort((a, b) => (stats.get(b.id)?.lastUsed ?? "").localeCompare(stats.get(a.id)?.lastUsed ?? ""));
+    }
+    return sorted;
+  }, [payees, search, sort, stats]);
+
+  const needsCategory = useMemo(
+    () => payees.filter((p) => !p.is_archived && p.default_category_id == null),
+    [payees],
+  );
+
+  function closePopover() {
+    setPopover(null);
+  }
+
+  function openPopover(target: PayeePopoverTarget, anchorRect: DOMRect) {
+    setPopover({ target, anchorRect });
+  }
+
+  async function handlePopoverSubmit(values: PayeePopoverValues) {
+    if (!popover) return;
     setError(null);
     try {
-      if (editingId != null) {
-        await updatePayee(db, editingId, values);
+      const { target } = popover;
+      if (target.mode === "add") {
+        await createPayee(db, { name: values.name, defaultCategoryId: values.defaultCategoryId });
       } else {
-        await createPayee(db, values);
+        await updatePayee(db, target.id, { name: values.name, defaultCategoryId: values.defaultCategoryId });
       }
-      setEditingId(null);
+      closePopover();
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function handleSetDefaultCategory(id: number, categoryId: number | null) {
+    setError(null);
+    try {
+      await setPayeeDefaultCategory(db, id, categoryId);
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -54,7 +112,6 @@ export function PayeesPage({ db }: PayeesPageProps) {
 
   async function handleArchiveToggle(id: number, archived: boolean) {
     await setPayeeArchived(db, id, archived);
-    if (editingId === id) setEditingId(null);
     await refresh();
   }
 
@@ -79,46 +136,108 @@ export function PayeesPage({ db }: PayeesPageProps) {
         ),
       run: async () => {
         await deletePayee(db, id);
-        if (editingId === id) setEditingId(null);
         await refresh();
       },
     });
   }
 
-  const editingPayee = editingId != null ? payees.find((p) => p.id === editingId) ?? null : null;
-
   return (
     <>
-      <h1>Payees</h1>
+      <div className="page-header-row payee-page-header">
+        <h1>Payees</h1>
+        <input
+          className="payee-search"
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          placeholder="Search payees…"
+        />
+        <select value={sort} onChange={(e) => setSort(e.currentTarget.value as SortMode)}>
+          <option value="name">Name</option>
+          <option value="most-used">Most used</option>
+          <option value="recent">Recently used</option>
+        </select>
+        <label className="show-archived">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={(e) => setShowArchived(e.currentTarget.checked)}
+          />
+          Show archived
+        </label>
+      </div>
 
       {error && <p className="form-error">{error}</p>}
 
-      <PayeeForm
-        key={editingId ?? "new"}
-        categories={categories}
-        initial={editingPayee}
-        onSubmit={handleSubmit}
-        onCancel={() => setEditingId(null)}
-      />
+      {needsCategory.length > 0 && (
+        <div className="payee-nudge-banner">
+          <span>
+            {needsCategory.length} payee{needsCategory.length === 1 ? "" : "s"} have no default category.
+          </span>
+          <button type="button" className="btn-primary" onClick={() => setBulkAssignOpen(true)}>
+            Assign now
+          </button>
+        </div>
+      )}
 
-      <label className="show-archived">
-        <input
-          type="checkbox"
-          checked={showArchived}
-          onChange={(e) => setShowArchived(e.currentTarget.checked)}
-        />
-        Show archived payees
-      </label>
+      {payees.length === 0 ? (
+        <div className="card">
+          <p className="empty-state">No payees yet — they're created automatically as you add transactions.</p>
+        </div>
+      ) : (
+        <motion.div layout className="payee-grid">
+          <AnimatePresence>
+            {visiblePayees.map((payee, i) => (
+              <PayeeTile
+                key={payee.id}
+                payee={payee}
+                categories={categories}
+                stats={stats.get(payee.id)}
+                index={i}
+                onView={onSelectPayee}
+                onOpenPopover={openPopover}
+                onArchiveToggle={handleArchiveToggle}
+                onDelete={handleDeleteRequest}
+                onSetDefaultCategory={handleSetDefaultCategory}
+              />
+            ))}
+            <motion.button
+              key="add-payee"
+              type="button"
+              layout
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: visiblePayees.length * 0.03 }}
+              className="card payee-tile payee-add-tile"
+              onClick={(e) => openPopover({ mode: "add" }, e.currentTarget.getBoundingClientRect())}
+            >
+              <Plus size={22} />
+              <span>Add payee</span>
+            </motion.button>
+          </AnimatePresence>
+        </motion.div>
+      )}
 
-      <div className="card">
-        <PayeeList
-          payees={payees}
+      {popover && (
+        <PayeeEditorPopover
+          target={popover.target}
+          anchorRect={popover.anchorRect}
           categories={categories}
-          onEdit={setEditingId}
-          onArchiveToggle={handleArchiveToggle}
-          onDelete={handleDeleteRequest}
+          onSubmit={handlePopoverSubmit}
+          onClose={closePopover}
         />
-      </div>
+      )}
+
+      {bulkAssignOpen && (
+        <PayeeBulkAssignModal
+          payees={needsCategory}
+          categories={categories}
+          onAssign={handleSetDefaultCategory}
+          onClose={() => {
+            setBulkAssignOpen(false);
+            void refresh();
+          }}
+        />
+      )}
 
       {del.pending && (
         <ConfirmDialog

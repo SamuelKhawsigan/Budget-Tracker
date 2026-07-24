@@ -8,6 +8,7 @@ import { AccountsPage } from "./pages/AccountsPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
 import { CategoriesPage } from "./pages/CategoriesPage";
 import { PayeesPage } from "./pages/PayeesPage";
+import { PayeeTransactionsPage } from "./pages/PayeeTransactionsPage";
 import { TransferPage } from "./pages/TransferPage";
 import { BudgetsPage } from "./pages/BudgetsPage";
 import { SavingsPage } from "./pages/SavingsPage";
@@ -21,6 +22,7 @@ type View =
   | { name: "transactions"; accountId: number }
   | { name: "categories" }
   | { name: "payees" }
+  | { name: "payee-transactions"; payeeId: number }
   | { name: "transfer" }
   | { name: "budgets" }
   | { name: "savings" }
@@ -54,13 +56,16 @@ function App() {
     );
   }
 
-  // "transactions" (drilling into one account's ledger) isn't its own nav
-  // item — it's reached via Accounts, so it keeps Accounts marked active.
-  const activeView: ViewName = view.name === "transactions" ? "accounts" : view.name;
+  // Drill-through views ("transactions" into one account's ledger,
+  // "payee-transactions" into one payee's) aren't their own nav items —
+  // they're reached via Accounts/Payees, so those stay marked active.
+  const activeView: ViewName =
+    view.name === "transactions" ? "accounts" : view.name === "payee-transactions" ? "payees" : view.name;
 
   function handleNavigate(name: ViewName) {
-    // Safe: ViewName is every View variant except "transactions", the only
-    // one that needs an extra field, so { name } alone always matches.
+    // Safe: ViewName is every View variant except the drill-through ones
+    // above, neither of which is reachable from the sidebar, so { name }
+    // alone always matches here.
     setView({ name } as View);
   }
 
@@ -89,7 +94,19 @@ function App() {
             />
           )}
           {view.name === "categories" && <CategoriesPage db={db} />}
-          {view.name === "payees" && <PayeesPage db={db} />}
+          {view.name === "payees" && (
+            <PayeesPage
+              db={db}
+              onSelectPayee={(payeeId) => setView({ name: "payee-transactions", payeeId })}
+            />
+          )}
+          {view.name === "payee-transactions" && (
+            <PayeeTransactionsPage
+              db={db}
+              payeeId={view.payeeId}
+              onBack={() => setView({ name: "payees" })}
+            />
+          )}
           {view.name === "transfer" && <TransferPage db={db} />}
           {view.name === "budgets" && <BudgetsPage db={db} />}
           {view.name === "savings" && <SavingsPage db={db} />}

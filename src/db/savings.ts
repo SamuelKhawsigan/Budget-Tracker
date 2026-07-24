@@ -66,6 +66,9 @@ export interface SavingsSweep {
   month: string;
   amount: number;
   transfer_id: number;
+  rule: SweepRule;
+  clamped: number; // 0/1, SQLite boolean convention used elsewhere in this schema
+  created_at: string;
 }
 
 export async function getSweepForMonth(db: Database, month: string): Promise<SavingsSweep | null> {
@@ -73,15 +76,25 @@ export async function getSweepForMonth(db: Database, month: string): Promise<Sav
   return rows[0] ?? null;
 }
 
+// All-time, most recent first — feeds the Savings page's history card. This
+// data has existed in the DB since Phase 6 but was never surfaced anywhere.
+export async function listSavingsSweeps(db: Database): Promise<SavingsSweep[]> {
+  return db.select<SavingsSweep[]>("SELECT * FROM savings_sweeps ORDER BY month DESC");
+}
+
 // Realizes the sweep: writes the linked-pair transfer from the source account
 // into savings, then records the savings_sweeps row tying it to this month.
-// One sweep per month — savings_sweeps.month is UNIQUE.
+// One sweep per month — savings_sweeps.month is UNIQUE. rule/clamped are
+// recorded at sweep time since sweep_rule is a global setting that can change
+// later — without capturing it here, a past sweep's rule would be unrecoverable.
 export async function closeMonth(
   db: Database,
   month: string,
   fromAccountId: number,
   toAccountId: number,
   amount: number,
+  rule: SweepRule,
+  clamped: boolean,
 ): Promise<void> {
   if (amount <= 0) {
     throw new Error("Nothing to sweep this month");
@@ -99,11 +112,10 @@ export async function closeMonth(
     notes: `Savings sweep for ${month}`,
   });
 
-  await db.execute("INSERT INTO savings_sweeps (month, amount, transfer_id) VALUES (?, ?, ?)", [
-    month,
-    amount,
-    transferId,
-  ]);
+  await db.execute(
+    "INSERT INTO savings_sweeps (month, amount, transfer_id, rule, clamped) VALUES (?, ?, ?, ?, ?)",
+    [month, amount, transferId, rule, clamped ? 1 : 0],
+  );
 }
 
 // Undoes a month's sweep: deletes both legs of its transfer and the
