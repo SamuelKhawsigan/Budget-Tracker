@@ -23,7 +23,7 @@ export async function pickAndReadCsv(): Promise<PickedFile | null> {
 export async function backupDatabase(): Promise<string | null> {
   const today = new Date().toISOString().slice(0, 10);
   const destination = await save({
-    defaultPath: `budget-backup-${today}.db`,
+    defaultPath: `sweep-backup-${today}.db`,
     filters: [{ name: "SQLite database", extensions: ["db"] }],
   });
   if (!destination) return null;

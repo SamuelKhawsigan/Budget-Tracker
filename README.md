@@ -1,6 +1,9 @@
-# Tauri + React + Typescript
+# Sweep
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+A local-first, single-user budget tracker built with Tauri, React, and SQLite.
+Manual transaction entry or CSV import, budgets, category and payee management,
+transfers, and an automatic month-end savings sweep — all stored in a local
+SQLite database, no account or cloud sync required.
 
 ## Recommended IDE Setup
 

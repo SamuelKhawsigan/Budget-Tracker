@@ -1,4 +1,4 @@
-# Budget Tracker — Data Model Spec
+# Sweep — Data Model Spec
 
 Local SQLite database for a single-user, manual-entry + CSV-import budget tracker
 (Tauri shell, React frontend). This is the schema and the reasoning behind it —

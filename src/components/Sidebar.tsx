@@ -57,7 +57,7 @@ interface SidebarProps {
 export function Sidebar({ activeView, onNavigate, onQuickAdd }: SidebarProps) {
   return (
     <nav className="sidebar" aria-label="Main navigation">
-      <div className="sidebar-brand">Budget Tracker</div>
+      <div className="sidebar-brand">Sweep</div>
 
       <ul className="sidebar-nav">
         {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
