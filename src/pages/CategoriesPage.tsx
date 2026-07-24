@@ -168,7 +168,7 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
           <span className={"category-kind-dot " + sectionKind} />
           {label}
         </h2>
-        <motion.div layout className="category-group-grid">
+        <motion.div className="category-group-grid">
           <AnimatePresence>
             {groups.map((group, i) => (
               <CategoryGroupCard
@@ -185,7 +185,6 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
             <motion.button
               key={`new-group-${sectionKind}`}
               type="button"
-              layout
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, delay: groups.length * 0.03 }}

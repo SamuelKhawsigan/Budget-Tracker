@@ -31,7 +31,7 @@ export function AccountGrid({ accounts, onView, onEdit, onArchiveToggle, onDelet
   const tier = getTier(accounts.length);
 
   return (
-    <motion.div className="account-grid" data-tier={tier} layout>
+    <motion.div className="account-grid" data-tier={tier}>
       <AnimatePresence>
         {accounts.map((account, i) => (
           <AccountTile
@@ -47,7 +47,6 @@ export function AccountGrid({ accounts, onView, onEdit, onArchiveToggle, onDelet
         <motion.button
           key="add-account"
           type="button"
-          layout
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92 }}
