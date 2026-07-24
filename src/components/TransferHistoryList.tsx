@@ -12,7 +12,7 @@ interface TransferHistoryListProps {
 
 export function TransferHistoryList({ transfers, onEdit, onDelete }: TransferHistoryListProps) {
   if (transfers.length === 0) {
-    return <p className="empty-state">No transfers yet.</p>;
+    return <p className="empty-state">No transfers yet — make one above.</p>;
   }
 
   return (

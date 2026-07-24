@@ -187,6 +187,12 @@ export function TransferPage({ db }: TransferPageProps) {
   const canSubmit =
     fromAccountId !== "" && toAccountId !== "" && fromAccountId !== toAccountId && amountMinor > 0 && !insufficientFunds;
 
+  let submitDisabledReason: string | null = null;
+  if (fromAccountId === "" || toAccountId === "") submitDisabledReason = "Choose both accounts";
+  else if (fromAccountId === toAccountId) submitDisabledReason = "Source and destination must be different";
+  else if (amountMinor <= 0) submitDisabledReason = "Enter an amount greater than zero";
+  else if (insufficientFunds) submitDisabledReason = "Insufficient funds in the source account";
+
   return (
     <>
       <h1>Transfer</h1>
@@ -196,7 +202,7 @@ export function TransferPage({ db }: TransferPageProps) {
 
       <div className="transfer-layout">
         {accounts.length < 2 ? (
-          <p className="empty-state">You need at least two accounts to make a transfer.</p>
+          <p className="empty-state">You need at least two accounts to make a transfer — add one in Accounts.</p>
         ) : (
           <form className="card transfer-form-card" onSubmit={handleSubmit}>
             {editingId != null && (
@@ -261,6 +267,7 @@ export function TransferPage({ db }: TransferPageProps) {
                   whileTap={{ scale: 0.9 }}
                   onClick={handleAllAmount}
                   disabled={!fromAccount || fromAccount.balance <= 0}
+                  title={!fromAccount || fromAccount.balance <= 0 ? "Source account has no balance to transfer" : undefined}
                 >
                   All
                 </motion.button>
@@ -273,7 +280,7 @@ export function TransferPage({ db }: TransferPageProps) {
                 <input type="date" value={date} onChange={(e) => setDate(e.currentTarget.value)} />
               </label>
               <label>
-                Note
+                Note<span className="field-optional">(optional)</span>
                 <input value={notes} onChange={(e) => setNotes(e.currentTarget.value)} placeholder="optional" />
               </label>
             </div>
@@ -312,7 +319,12 @@ export function TransferPage({ db }: TransferPageProps) {
               </p>
             )}
 
-            <button type="submit" className="btn-primary transfer-submit" disabled={!canSubmit}>
+            <button
+              type="submit"
+              className="btn-primary transfer-submit"
+              disabled={!canSubmit}
+              title={submitDisabledReason ?? undefined}
+            >
               {editingId != null ? "Save changes" : "Record transfer"}
             </button>
           </form>

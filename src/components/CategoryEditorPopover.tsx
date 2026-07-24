@@ -18,6 +18,7 @@ export interface CategoryPopoverValues {
 interface CategoryEditorPopoverProps {
   target: CategoryPopoverTarget;
   anchorRect: DOMRect;
+  siblingNames: string[];
   onSubmit: (values: CategoryPopoverValues) => void | Promise<void>;
   onClose: () => void;
 }
@@ -31,7 +32,13 @@ const MARGIN = 16;
 // whatever trigger opened it (a "..." menu item or a dashed +Add row), rather
 // than a relatively-positioned popover, so it can never clip against a card
 // near the grid's edge.
-export function CategoryEditorPopover({ target, anchorRect, onSubmit, onClose }: CategoryEditorPopoverProps) {
+export function CategoryEditorPopover({
+  target,
+  anchorRect,
+  siblingNames,
+  onSubmit,
+  onClose,
+}: CategoryEditorPopoverProps) {
   const isEdit = target.mode === "edit";
   const [name, setName] = useState(isEdit ? target.name : "");
   const [color, setColor] = useState<string>(isEdit ? target.color ?? categoryPalette[0] : categoryPalette[0]);
@@ -68,6 +75,10 @@ export function CategoryEditorPopover({ target, anchorRect, onSubmit, onClose }:
       setError("Name is required");
       return;
     }
+    if (siblingNames.some((n) => n.toLowerCase() === name.trim().toLowerCase())) {
+      setError("A category with this name already exists here");
+      return;
+    }
     setError(null);
     void Promise.resolve(onSubmit({ name: name.trim(), color, icon }));
   }
@@ -97,7 +108,7 @@ export function CategoryEditorPopover({ target, anchorRect, onSubmit, onClose }:
         ref={nameRef}
         value={name}
         onChange={(e) => setName(e.currentTarget.value)}
-        placeholder="Name"
+        placeholder={target.mode === "add-group" ? "e.g. Household" : "e.g. Groceries"}
       />
 
       <ColorSwatchPicker value={color} onChange={setColor} />

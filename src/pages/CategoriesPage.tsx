@@ -72,6 +72,20 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
     setPopover(null);
   }
 
+  function getSiblingNames(target: CategoryPopoverTarget): string[] {
+    if (target.mode === "add-group") {
+      return categories.filter((c) => c.parent_id == null && c.kind === target.kind).map((c) => c.name);
+    }
+    if (target.mode === "add-leaf") {
+      return categories.filter((c) => c.parent_id === target.groupId).map((c) => c.name);
+    }
+    const editing = categories.find((c) => c.id === target.id);
+    if (!editing) return [];
+    return categories
+      .filter((c) => c.id !== editing.id && c.parent_id === editing.parent_id && c.kind === editing.kind)
+      .map((c) => c.name);
+  }
+
   function openPopover(target: CategoryPopoverTarget, anchorRect: DOMRect) {
     setPopover({ target, anchorRect });
   }
@@ -212,6 +226,7 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
         <CategoryEditorPopover
           target={popover.target}
           anchorRect={popover.anchorRect}
+          siblingNames={getSiblingNames(popover.target)}
           onSubmit={handlePopoverSubmit}
           onClose={closePopover}
         />

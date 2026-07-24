@@ -14,17 +14,20 @@ export const categoryPalette = [
 ] as const;
 
 // Per-theme substitutes for each slot, harmonious with that theme's own
-// accent/warning/danger (slots 0-2 reuse them directly) and with slots 3-5
-// derived by applying the same HSL hue/sat/light deltas the canonical
-// slate-blue/mauve/deep-sage have relative to canonical sage, then nudged
-// for >=4.5:1 contrast against that theme's own bg/surface.
+// accent/warning/danger (slots 0-2 mirror them — kept as separate literals
+// rather than referencing THEMES directly, so retuning a theme's danger for
+// contrast doesn't also silently reinterpret categoryPalette's own canonical
+// slot-1 value, which existing stored category colors depend on matching
+// exactly) and with slots 3-5 derived by applying the same HSL hue/sat/light
+// deltas the canonical slate-blue/mauve/deep-sage have relative to canonical
+// sage, then nudged for >=4.5:1 contrast against that theme's own bg/surface.
 export const CATEGORY_PALETTES: Record<ThemeName, readonly string[]> = {
-  "warm-dark": categoryPalette,
-  parchment: ["#5f723f", "#b4482a", "#8d6318", "#3f5f72", "#764b5f", "#4c5938"],
-  midnight: ["#6fb3a5", "#d4695c", "#e0a94f", "#a874b6", "#b2b080", "#62a093"],
-  phosphor: ["#86c06c", "#d2664f", "#c9b458", "#6c86c0", "#bf7d87", "#76ae5d"],
-  dusk: ["#93b58c", "#c86a7c", "#d6a15e", "#8c93b5", "#b69b9b", "#85a180"],
-  ink: ["#2c7667", "#b33f32", "#8c6212", "#672c76", "#706d31", "#285a50"],
+  "warm-dark": ["#9BB07A", "#D07053", "#D8A657", "#7A9BB0", "#B08A9B", "#8A9C6E"],
+  parchment: ["#58693a", "#a84327", "#815b16", "#3f5f72", "#764b5f", "#4c5938"],
+  midnight: ["#6fb3a5", "#d87569", "#e0a94f", "#a874b6", "#b2b080", "#62a093"],
+  phosphor: ["#86c06c", "#d26750", "#c9b458", "#6c86c0", "#bf7d87", "#76ae5d"],
+  dusk: ["#93b58c", "#cb7283", "#d6a15e", "#8c93b5", "#b69b9b", "#85a180"],
+  ink: ["#296e60", "#ae3d31", "#835b11", "#672c76", "#706d31", "#285a50"],
 };
 
 // Groups never get an explicit color (createCategoryGroup doesn't take one)

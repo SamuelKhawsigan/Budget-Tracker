@@ -95,7 +95,7 @@ export function CsvMappingForm({
       )}
 
       <label>
-        Mapping name
+        Mapping name<span className="field-required" title="Required">*</span>
         <input
           value={profileName}
           onChange={(e) => setProfileName(e.currentTarget.value)}

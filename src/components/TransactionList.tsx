@@ -10,7 +10,7 @@ interface TransactionListProps {
 
 export function TransactionList({ transactions, currency, onEdit, onDelete }: TransactionListProps) {
   if (transactions.length === 0) {
-    return <p className="empty-state">No transactions match.</p>;
+    return <p className="empty-state">No transactions match — try adjusting your filters, or add a transaction above.</p>;
   }
 
   return (

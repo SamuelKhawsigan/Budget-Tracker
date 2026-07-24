@@ -16,6 +16,7 @@ interface PayeeEditorPopoverProps {
   target: PayeePopoverTarget;
   anchorRect: DOMRect;
   categories: CategoryOption[];
+  existingNames: string[];
   onSubmit: (values: PayeePopoverValues) => void | Promise<void>;
   onClose: () => void;
 }
@@ -29,6 +30,7 @@ export function PayeeEditorPopover({
   target,
   anchorRect,
   categories,
+  existingNames,
   onSubmit,
   onClose,
 }: PayeeEditorPopoverProps) {
@@ -69,6 +71,10 @@ export function PayeeEditorPopover({
       setError("Name is required");
       return;
     }
+    if (existingNames.some((n) => n.toLowerCase() === name.trim().toLowerCase())) {
+      setError("A payee with this name already exists");
+      return;
+    }
     setError(null);
     void Promise.resolve(onSubmit({ name: name.trim(), defaultCategoryId }));
   }
@@ -92,7 +98,7 @@ export function PayeeEditorPopover({
         ref={nameRef}
         value={name}
         onChange={(e) => setName(e.currentTarget.value)}
-        placeholder="Name"
+        placeholder="e.g. Grocery Mart"
       />
 
       <CategoryPicker

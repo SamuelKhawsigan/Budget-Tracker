@@ -12,7 +12,7 @@ export function SavingsHistoryCard({ sweeps }: SavingsHistoryCardProps) {
     <div className="card savings-history-card">
       <h2>Sweep history</h2>
       {sweeps.length === 0 ? (
-        <p className="empty-state">No sweeps recorded yet.</p>
+        <p className="empty-state">No sweeps recorded yet — closing a month will run one automatically.</p>
       ) : (
         <ul className="entity-list savings-history-list">
           {sweeps.map((s, i) => (

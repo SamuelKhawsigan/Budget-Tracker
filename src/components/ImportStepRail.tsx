@@ -32,6 +32,7 @@ export function ImportStepRail({ currentStep, furthestStep, onStepClick }: Impor
               className={"import-step" + (current ? " current" : "") + (completed ? " completed" : "")}
               onClick={() => reachable && onStepClick(step)}
               disabled={!reachable}
+              title={!reachable ? "Complete the previous steps first" : undefined}
             >
               <span className="import-step-marker">{completed ? <Check size={14} /> : step}</span>
               <span className="import-step-label">{label}</span>

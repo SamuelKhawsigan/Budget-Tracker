@@ -47,7 +47,7 @@ export function PayeeTransactionsPage({ db, payeeId, onBack }: PayeeTransactions
 
       <div className="card">
         {rows.length === 0 ? (
-          <p className="empty-state">No transactions for this payee yet.</p>
+          <p className="empty-state">No transactions for this payee yet — add one from Transactions.</p>
         ) : (
           <ul className="entity-list">
             {rows.map((r, i) => (

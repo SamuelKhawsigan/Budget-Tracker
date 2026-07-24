@@ -267,7 +267,7 @@ export function ImportPage({ db, preselectedAccountId, onNavigateToAccounts, onN
                 <div className="card import-recent-card">
                   <h2>Recent imports</h2>
                   {recentImports.length === 0 ? (
-                    <p className="empty-state">No imports yet.</p>
+                    <p className="empty-state">No imports yet — drop a CSV on the left to bring in transactions.</p>
                   ) : (
                     <ul className="entity-list">
                       {recentImports.map((b) => (
@@ -293,7 +293,7 @@ export function ImportPage({ db, preselectedAccountId, onNavigateToAccounts, onN
                 <div className="card import-mappings-card">
                   <h2>Saved mappings</h2>
                   {mappingNames.length === 0 ? (
-                    <p className="empty-state">None saved yet.</p>
+                    <p className="empty-state">None saved yet — you'll be prompted to name one during your first import.</p>
                   ) : (
                     <div className="import-mapping-chips">
                       {mappingNames.map((name) => (
@@ -357,7 +357,12 @@ export function ImportPage({ db, preselectedAccountId, onNavigateToAccounts, onN
                 />
               </div>
               <div className="transaction-form-actions">
-                <button type="button" onClick={() => void handleCommit()} disabled={importing || newCount === 0}>
+                <button
+                  type="button"
+                  onClick={() => void handleCommit()}
+                  disabled={importing || newCount === 0}
+                  title={!importing && newCount === 0 ? "Select at least one row to import" : undefined}
+                >
                   {importing ? "Importing…" : `Commit import (${newCount})`}
                 </button>
                 <button type="button" onClick={() => goToStep(1)}>

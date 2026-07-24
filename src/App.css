@@ -11,12 +11,13 @@
   --text-primary: #ede9dd;
   --text-muted: #9c9686;
   --accent: #9bb07a;
-  --danger: #ce6a4c;
+  --danger: #d07053;
   --warning: #d8a657;
 
-  /* Derived, not per-theme: a new theme in themes.ts gets a correctly
-     contrasted border for free instead of needing its own hand-picked value. */
-  --border: color-mix(in srgb, var(--text-primary) 9%, transparent);
+  /* Fallback only — ThemeProvider sets this per-theme (see lib/themes.ts)
+     at a per-theme alpha tuned for real 3:1 contrast, since a single shared
+     percentage can't hit that for both dark and light themes at once. */
+  --border: rgba(237, 233, 221, 0.4);
 
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -162,8 +163,30 @@ button {
   box-shadow: none;
 }
 
+/* Browsers apply their own dimming on top of whatever color is set here —
+   pin opacity to 1 so placeholder text renders at --text-muted's actual,
+   already-verified-legible strength instead of fading further. */
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
 button:hover {
   border-color: var(--accent);
+}
+
+/* A consistent fallback for every button/input/select in the app — anything
+   without its own more specific :disabled rule still reads clearly as
+   unavailable rather than looking identical to an enabled control. */
+button:disabled,
+input:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  border-color: var(--border);
 }
 
 button:active {
@@ -528,7 +551,7 @@ button:focus-visible {
   border-color: transparent;
   background: transparent;
   color: var(--text-muted);
-  opacity: 0.65;
+  opacity: 0.85;
   box-shadow: none;
 }
 
@@ -643,6 +666,18 @@ button:focus-visible {
   color: var(--accent);
   font-size: 0.9rem;
   margin: 0;
+}
+
+.field-required {
+  color: var(--danger);
+  margin-left: 0.2em;
+}
+
+.field-optional {
+  color: var(--text-muted);
+  font-weight: normal;
+  font-size: 0.85em;
+  margin-left: 0.35em;
 }
 
 .show-archived {

@@ -58,7 +58,7 @@ export function UnbudgetedChip({ summary, onSave }: UnbudgetedChipProps) {
             onChange={(e) => setCapText(e.currentTarget.value)}
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
-            placeholder="Set cap"
+            placeholder="0.00"
             inputMode="decimal"
           />
           {error && <span className="form-error budget-chip-error">{error}</span>}

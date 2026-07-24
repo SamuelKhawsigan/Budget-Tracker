@@ -60,7 +60,13 @@ export function ImportDropZone({ disabled, onFilePicked, onError }: ImportDropZo
       <UploadCloud size={32} />
       <p className="import-drop-zone-text">Drag a CSV file here</p>
       <span className="import-drop-zone-or">or</span>
-      <button type="button" className="btn-primary" onClick={() => void handleBrowse()} disabled={disabled}>
+      <button
+        type="button"
+        className="btn-primary"
+        onClick={() => void handleBrowse()}
+        disabled={disabled}
+        title={disabled ? "Choose an account first" : undefined}
+      >
         Browse files…
       </button>
     </motion.div>

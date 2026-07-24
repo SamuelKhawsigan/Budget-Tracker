@@ -143,7 +143,7 @@ export function TransactionForm({
 
       <div className="transaction-form-row">
         <label>
-          Amount
+          Amount<span className="field-required" title="Required">*</span>
           <input
             ref={amountRef}
             value={amountText}
@@ -170,12 +170,12 @@ export function TransactionForm({
         </label>
 
         <label>
-          Payee
+          Payee<span className="field-optional">(optional)</span>
           <input
             list="payee-suggestions"
             value={payeeName}
             onChange={(e) => handlePayeeNameChange(e.currentTarget.value)}
-            placeholder="optional"
+            placeholder="e.g. Grocery Mart"
           />
         </label>
         <datalist id="payee-suggestions">
@@ -186,7 +186,7 @@ export function TransactionForm({
       </div>
 
       <label>
-        Notes
+        Notes<span className="field-optional">(optional)</span>
         <input value={notes} onChange={(e) => setNotes(e.currentTarget.value)} placeholder="optional" />
       </label>
 

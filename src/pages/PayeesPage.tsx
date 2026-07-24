@@ -181,7 +181,7 @@ export function PayeesPage({ db, onSelectPayee }: PayeesPageProps) {
 
       {payees.length === 0 ? (
         <div className="card">
-          <p className="empty-state">No payees yet — they're created automatically as you add transactions.</p>
+          <p className="empty-state">No payees yet — add one, or import a statement to create them automatically.</p>
         </div>
       ) : (
         <motion.div layout className="payee-grid">
@@ -222,6 +222,9 @@ export function PayeesPage({ db, onSelectPayee }: PayeesPageProps) {
           target={popover.target}
           anchorRect={popover.anchorRect}
           categories={categories}
+          existingNames={payees
+            .filter((p) => !(popover.target.mode === "edit" && p.id === popover.target.id))
+            .map((p) => p.name)}
           onSubmit={handlePopoverSubmit}
           onClose={closePopover}
         />

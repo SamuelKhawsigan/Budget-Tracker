@@ -12,11 +12,12 @@ interface AccountFormInitial {
 
 interface AccountFormProps {
   initial: AccountFormInitial | null;
+  existingNames: string[];
   onSubmit: (values: AccountInput) => void | Promise<void>;
   onCancel: () => void;
 }
 
-export function AccountForm({ initial, onSubmit, onCancel }: AccountFormProps) {
+export function AccountForm({ initial, existingNames, onSubmit, onCancel }: AccountFormProps) {
   const [name, setName] = useState(initial?.name ?? "");
   const [type, setType] = useState<AccountType>(initial?.type ?? "checking");
   const [currency, setCurrency] = useState(initial?.currency ?? "MYR");
@@ -30,6 +31,10 @@ export function AccountForm({ initial, onSubmit, onCancel }: AccountFormProps) {
 
     if (!name.trim()) {
       setValidationError("Name is required");
+      return;
+    }
+    if (existingNames.some((n) => n.toLowerCase() === name.trim().toLowerCase())) {
+      setValidationError("An account with this name already exists");
       return;
     }
 
@@ -58,11 +63,11 @@ export function AccountForm({ initial, onSubmit, onCancel }: AccountFormProps) {
 
       <div className="form-grid-2">
         <label>
-          Name
+          Name<span className="field-required" title="Required">*</span>
           <input
             value={name}
             onChange={(e) => setName(e.currentTarget.value)}
-            placeholder="e.g. Main Account"
+            placeholder="e.g. Maybank Savings"
           />
         </label>
 
@@ -78,11 +83,12 @@ export function AccountForm({ initial, onSubmit, onCancel }: AccountFormProps) {
         </label>
 
         <label>
-          Currency
+          Currency<span className="field-required" title="Required">*</span>
           <input
             value={currency}
             onChange={(e) => setCurrency(e.currentTarget.value)}
             maxLength={3}
+            placeholder="MYR"
           />
         </label>
 

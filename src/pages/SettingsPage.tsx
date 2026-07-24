@@ -243,7 +243,7 @@ export function SettingsPage({ db }: SettingsPageProps) {
         <div className="settings-field">
           <label>CSV import mappings</label>
           {mappingNames.length === 0 ? (
-            <p className="empty-state">No saved mappings yet — they're created during CSV import.</p>
+            <p className="empty-state">No saved mappings yet — create one during your next CSV import.</p>
           ) : (
             <ul className="entity-list">
               {mappingNames.map((name) => (

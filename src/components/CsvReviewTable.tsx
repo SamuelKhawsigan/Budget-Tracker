@@ -19,7 +19,7 @@ export function CsvReviewTable({
   onCategoryChange,
 }: CsvReviewTableProps) {
   if (rows.length === 0) {
-    return <p className="empty-state">No rows parsed from this file.</p>;
+    return <p className="empty-state">No rows parsed from this file — check it's a valid CSV and go back to try another.</p>;
   }
 
   return (

@@ -102,7 +102,13 @@ export function SavingsThisMonthCard({
                     ))}
                 </select>
               </label>
-              <button type="button" className="btn-primary" onClick={onCloseMonth} disabled={!!disabledReason}>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={onCloseMonth}
+                disabled={!!disabledReason}
+                title={disabledReason ?? undefined}
+              >
                 Close month &amp; sweep
               </button>
               {disabledReason && <span className="savings-disabled-reason">{disabledReason}</span>}

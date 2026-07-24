@@ -152,6 +152,7 @@ export function AccountsPage({ db, onSelectAccount }: AccountsPageProps) {
             <AccountForm
               key={editingId ?? "new"}
               initial={editingAccount}
+              existingNames={accounts.filter((a) => a.id !== editingId).map((a) => a.name)}
               onSubmit={handleSubmit}
               onCancel={() => setFormOpen(false)}
             />

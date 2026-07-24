@@ -10,7 +10,7 @@ export function BudgetHealthList({ summaries }: BudgetHealthListProps) {
   const budgeted = summaries.filter((s) => s.cap != null);
 
   if (budgeted.length === 0) {
-    return <p className="empty-state">No budgets set for this month yet.</p>;
+    return <p className="empty-state">No budgets set for this month yet — set one in Budgets.</p>;
   }
 
   return (

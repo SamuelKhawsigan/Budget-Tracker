@@ -6,6 +6,7 @@ export interface ThemeColors {
   bg: string;
   surface: string;
   surfaceAlt: string;
+  border: string;
   textPrimary: string;
   textMuted: string;
   accent: string;
@@ -20,16 +21,21 @@ export interface ThemeDefinition {
 }
 
 // Every color below is individually verified >=4.5:1 (WCAG AA) for
-// text/bg, text/surface, muted/bg, muted/surface, muted/surfaceAlt,
-// accent/bg, accent/surface, warning/bg, warning/surface, danger/bg and
-// danger/surface. Parchment's and Ink's accent/warning/muted were nudged
-// darker from the first pass (which failed against their light
-// backgrounds) — see history for the original untuned values.
+// text/bg, text/surface/surfaceAlt, muted/bg/surface/surfaceAlt, and
+// accent/warning/danger against bg, surface, AND surfaceAlt (the last of
+// these needed a second, small tuning pass — the first pass only checked
+// bg/surface and missed a few sub-4.5 pairs against surfaceAlt specifically,
+// where colored text can land via hover states).
 //
-// --border isn't stored here: it's derived once in App.css as
-// color-mix(in srgb, var(--text-primary) 9%, transparent), so a new theme
-// gets a correctly-contrasted border for free instead of needing its own
-// hand-picked value.
+// --border is a literal per-theme value, not a single derived formula: a
+// flat color-mix(text-primary, 9%, transparent) measured under 1.3:1 against
+// surface in every theme — WCAG's 3:1 non-text-contrast minimum for an
+// interactive control's boundary (every input/select/button uses --border)
+// needs roughly 40% for dark themes and 53-55% for light ones, a large
+// enough gap that one shared percentage can't serve both without either
+// under- or over-shooting. A new theme should compute its own value the same
+// way: mix textPrimary over surface (and surfaceAlt) at increasing alpha
+// until contrast(mixed, surface) >= ~3.2 for margin.
 export const THEMES: Record<ThemeName, ThemeDefinition> = {
   "warm-dark": {
     label: "Warm Dark",
@@ -38,11 +44,12 @@ export const THEMES: Record<ThemeName, ThemeDefinition> = {
       bg: "#17150f",
       surface: "#201e16",
       surfaceAlt: "#262218",
+      border: "rgba(237, 233, 221, 0.4)",
       textPrimary: "#ede9dd",
       textMuted: "#9c9686",
       accent: "#9bb07a",
       warning: "#d8a657",
-      danger: "#ce6a4c",
+      danger: "#d07053",
     },
   },
   parchment: {
@@ -52,11 +59,12 @@ export const THEMES: Record<ThemeName, ThemeDefinition> = {
       bg: "#f4f0e6",
       surface: "#fffdf7",
       surfaceAlt: "#e7e1d2",
+      border: "rgba(42, 39, 32, 0.55)",
       textPrimary: "#2a2720",
       textMuted: "#686353",
-      accent: "#5f723f",
-      warning: "#8d6318",
-      danger: "#b4482a",
+      accent: "#58693a",
+      warning: "#815b16",
+      danger: "#a84327",
     },
   },
   midnight: {
@@ -66,11 +74,12 @@ export const THEMES: Record<ThemeName, ThemeDefinition> = {
       bg: "#0f1418",
       surface: "#171f24",
       surfaceAlt: "#1f2a30",
+      border: "rgba(227, 234, 238, 0.42)",
       textPrimary: "#e3eaee",
       textMuted: "#8a9aa5",
       accent: "#6fb3a5",
       warning: "#e0a94f",
-      danger: "#d4695c",
+      danger: "#d87569",
     },
   },
   phosphor: {
@@ -80,11 +89,12 @@ export const THEMES: Record<ThemeName, ThemeDefinition> = {
       bg: "#0a0c0a",
       surface: "#101410",
       surfaceAlt: "#182016",
+      border: "rgba(214, 232, 208, 0.4)",
       textPrimary: "#d6e8d0",
       textMuted: "#7a8c76",
       accent: "#86c06c",
       warning: "#c9b458",
-      danger: "#d2664f",
+      danger: "#d26750",
     },
   },
   dusk: {
@@ -94,11 +104,12 @@ export const THEMES: Record<ThemeName, ThemeDefinition> = {
       bg: "#16121a",
       surface: "#1f1a24",
       surfaceAlt: "#28222e",
+      border: "rgba(233, 227, 239, 0.42)",
       textPrimary: "#e9e3ef",
       textMuted: "#9b90a6",
       accent: "#93b58c",
       warning: "#d6a15e",
-      danger: "#c86a7c",
+      danger: "#cb7283",
     },
   },
   ink: {
@@ -108,11 +119,12 @@ export const THEMES: Record<ThemeName, ThemeDefinition> = {
       bg: "#edeef0",
       surface: "#ffffff",
       surfaceAlt: "#dfe2e6",
+      border: "rgba(28, 32, 38, 0.53)",
       textPrimary: "#1c2026",
       textMuted: "#5c636d",
-      accent: "#2c7667",
-      warning: "#8c6212",
-      danger: "#b33f32",
+      accent: "#296e60",
+      warning: "#835b11",
+      danger: "#ae3d31",
     },
   },
 };
@@ -124,10 +136,10 @@ export function isThemeName(value: string | null): value is ThemeName {
   return !!value && value in THEMES;
 }
 
-// Mixing a color at P% with fully transparent (as App.css's --border does via
-// color-mix) is exactly equivalent to that color's RGB channels at alpha P —
-// this gives chart libraries needing a concrete color (not a CSS custom
-// property) the same derived border tone instead of a second hardcoded value.
+// Mixing a color at P% with fully transparent (as the border values above
+// were derived) is exactly equivalent to that color's RGB channels at alpha
+// P — this gives chart libraries needing a concrete color (not a CSS custom
+// property) the same kind of derived tone instead of a second hardcoded value.
 export function withAlpha(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -140,6 +152,7 @@ export const CSS_VAR_NAMES: Record<keyof ThemeColors, string> = {
   bg: "--bg",
   surface: "--surface",
   surfaceAlt: "--surface-alt",
+  border: "--border",
   textPrimary: "--text-primary",
   textMuted: "--text-muted",
   accent: "--accent",
