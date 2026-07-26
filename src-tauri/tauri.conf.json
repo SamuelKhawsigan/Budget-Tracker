@@ -15,7 +15,7 @@
         "title": "Sweep",
         "width": 800,
         "height": 600,
-        "dragDropEnabled": false
+        "dragDropEnabled": true
       }
     ],
     "security": {
