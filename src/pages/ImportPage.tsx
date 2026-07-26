@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
 import { AnimatePresence, motion } from "framer-motion";
+import { Plus } from "lucide-react";
 import { listAccounts, type AccountWithBalance } from "../db/accounts";
 import { listLeafCategories, type CategoryOption } from "../db/categories";
 import { findOrCreatePayee, findPayeesByNames } from "../db/payees";
@@ -59,6 +60,16 @@ export function ImportPage({ db, preselectedAccountId, onNavigateToAccounts, onN
 
   function goToStep(step: ImportStep) {
     if (step <= furthestStep) setCurrentStep(step);
+  }
+
+  function handleNewImport() {
+    setCurrentStep(1);
+    setFurthestStep(1);
+    setRawRows(null);
+    setRows([]);
+    setFileName("");
+    setError(null);
+    setSuccess(null);
   }
 
   function handleFilePicked(name: string, text: string) {
@@ -222,7 +233,18 @@ export function ImportPage({ db, preselectedAccountId, onNavigateToAccounts, onN
 
   return (
     <>
-      <h1>Import CSV</h1>
+      <div className="page-header-row">
+        <h1 className="sr-only">Import CSV</h1>
+        <button
+          type="button"
+          className="btn-primary page-header-create-btn"
+          onClick={handleNewImport}
+          disabled={accounts.length === 0 || (currentStep === 1 && !rawRows)}
+          title={accounts.length === 0 ? "Add an account first" : undefined}
+        >
+          <Plus size={16} /> New import
+        </button>
+      </div>
 
       {accounts.length > 0 && (
         <ImportStepRail currentStep={currentStep} furthestStep={furthestStep} onStepClick={goToStep} />

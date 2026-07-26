@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
+import { AnimatePresence } from "framer-motion";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getDb } from "./db";
 import { ThemeProvider } from "./lib/ThemeContext";
 import { Sidebar, type ViewName } from "./components/Sidebar";
+import { QuickAddTransactionModal } from "./components/QuickAddTransactionModal";
+import { SplashScreen } from "./components/SplashScreen";
 import { DashboardPage } from "./pages/DashboardPage";
 import { AccountsPage } from "./pages/AccountsPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
@@ -29,31 +33,39 @@ type View =
   | { name: "import"; accountId?: number }
   | { name: "settings" };
 
+// Never disappears before this, even on an instant local DB connection — a
+// splash that flashes for one frame reads as a glitch, not a boot sequence.
+const MIN_SPLASH_MS = 600;
+
 function App() {
   const [db, setDb] = useState<Database | null>(null);
-  const [dbError, setDbError] = useState<string | null>(null);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+  const [bootAttempt, setBootAttempt] = useState(0);
   const [view, setView] = useState<View>({ name: "dashboard" });
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
 
   useEffect(() => {
+    setBootError(null);
     getDb()
       .then((database) => setDb(database))
-      .catch((e) => setDbError(e instanceof Error ? e.message : String(e)));
-  }, []);
+      .catch((e) => setBootError(e instanceof Error ? e.message : String(e)));
+  }, [bootAttempt]);
 
-  if (dbError) {
-    return (
-      <div className="app-shell app-shell-unready">
-        <p className="form-error">{dbError}</p>
-      </div>
-    );
+  useEffect(() => {
+    setMinTimeElapsed(false);
+    const timer = setTimeout(() => setMinTimeElapsed(true), MIN_SPLASH_MS);
+    return () => clearTimeout(timer);
+  }, [bootAttempt]);
+
+  function handleRetry() {
+    setDb(null);
+    setBootAttempt((n) => n + 1);
   }
 
-  if (!db) {
-    return (
-      <div className="app-shell app-shell-unready">
-        <p className="empty-state">Loading…</p>
-      </div>
-    );
+  function handleQuit() {
+    void getCurrentWindow().close();
   }
 
   // Drill-through views ("transactions" into one account's ledger,
@@ -69,60 +81,91 @@ function App() {
     setView({ name } as View);
   }
 
-  return (
-    <ThemeProvider db={db}>
-      <div className="app-shell">
-        <Sidebar
-          activeView={activeView}
-          onNavigate={handleNavigate}
-          onQuickAdd={() => setView({ name: "accounts" })}
-        />
+  const showSplash = !db || !minTimeElapsed;
 
-        <main className="app-content">
-          {view.name === "dashboard" && <DashboardPage db={db} />}
-          {view.name === "accounts" && (
-            <AccountsPage
-              db={db}
-              onSelectAccount={(accountId) => setView({ name: "transactions", accountId })}
+  return (
+    <>
+      <AnimatePresence>
+        {showSplash && (
+          <SplashScreen
+            status={bootError ? "error" : "loading"}
+            errorMessage={bootError}
+            onRetry={handleRetry}
+            onQuit={handleQuit}
+          />
+        )}
+      </AnimatePresence>
+
+      {db && (
+        <ThemeProvider db={db}>
+          <div className="app-shell">
+            <Sidebar
+              activeView={activeView}
+              onNavigate={handleNavigate}
+              onQuickAdd={() => setQuickAddOpen(true)}
             />
-          )}
-          {view.name === "transactions" && (
-            <TransactionsPage
-              db={db}
-              accountId={view.accountId}
-              onBack={() => setView({ name: "accounts" })}
-              onImport={() => setView({ name: "import", accountId: view.accountId })}
-            />
-          )}
-          {view.name === "categories" && <CategoriesPage db={db} />}
-          {view.name === "payees" && (
-            <PayeesPage
-              db={db}
-              onSelectPayee={(payeeId) => setView({ name: "payee-transactions", payeeId })}
-            />
-          )}
-          {view.name === "payee-transactions" && (
-            <PayeeTransactionsPage
-              db={db}
-              payeeId={view.payeeId}
-              onBack={() => setView({ name: "payees" })}
-            />
-          )}
-          {view.name === "transfer" && <TransferPage db={db} />}
-          {view.name === "budgets" && <BudgetsPage db={db} />}
-          {view.name === "savings" && <SavingsPage db={db} />}
-          {view.name === "import" && (
-            <ImportPage
-              db={db}
-              preselectedAccountId={view.accountId}
-              onNavigateToAccounts={() => setView({ name: "accounts" })}
-              onNavigateToSettings={() => setView({ name: "settings" })}
-            />
-          )}
-          {view.name === "settings" && <SettingsPage db={db} />}
-        </main>
-      </div>
-    </ThemeProvider>
+
+            <main className="app-content">
+              {view.name === "dashboard" && (
+                <DashboardPage
+                  key={dashboardRefreshKey}
+                  db={db}
+                  onQuickAdd={() => setQuickAddOpen(true)}
+                />
+              )}
+              {view.name === "accounts" && (
+                <AccountsPage
+                  db={db}
+                  onSelectAccount={(accountId) => setView({ name: "transactions", accountId })}
+                />
+              )}
+              {view.name === "transactions" && (
+                <TransactionsPage
+                  db={db}
+                  accountId={view.accountId}
+                  onBack={() => setView({ name: "accounts" })}
+                  onImport={() => setView({ name: "import", accountId: view.accountId })}
+                />
+              )}
+              {view.name === "categories" && <CategoriesPage db={db} />}
+              {view.name === "payees" && (
+                <PayeesPage
+                  db={db}
+                  onSelectPayee={(payeeId) => setView({ name: "payee-transactions", payeeId })}
+                />
+              )}
+              {view.name === "payee-transactions" && (
+                <PayeeTransactionsPage
+                  db={db}
+                  payeeId={view.payeeId}
+                  onBack={() => setView({ name: "payees" })}
+                />
+              )}
+              {view.name === "transfer" && <TransferPage db={db} />}
+              {view.name === "budgets" && <BudgetsPage db={db} />}
+              {view.name === "savings" && <SavingsPage db={db} />}
+              {view.name === "import" && (
+                <ImportPage
+                  db={db}
+                  preselectedAccountId={view.accountId}
+                  onNavigateToAccounts={() => setView({ name: "accounts" })}
+                  onNavigateToSettings={() => setView({ name: "settings" })}
+                />
+              )}
+              {view.name === "settings" && <SettingsPage db={db} />}
+            </main>
+
+            {quickAddOpen && (
+              <QuickAddTransactionModal
+                db={db}
+                onClose={() => setQuickAddOpen(false)}
+                onCreated={() => setDashboardRefreshKey((n) => n + 1)}
+              />
+            )}
+          </div>
+        </ThemeProvider>
+      )}
+    </>
   );
 }
 

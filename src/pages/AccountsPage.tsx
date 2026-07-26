@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
+import { Plus } from "lucide-react";
 import {
   createAccount,
   deleteAccountCascade,
@@ -118,12 +119,15 @@ export function AccountsPage({ db, onSelectAccount }: AccountsPageProps) {
   return (
     <>
       <div className="page-header-row">
-        <h1>Accounts</h1>
+        <h1 className="sr-only">Accounts</h1>
         {activeAccounts.length > 0 && (
           <span className="page-header-total">
             Total <span className="figure">{totalCurrency} {fromMinorUnits(total)}</span>
           </span>
         )}
+        <button type="button" className="btn-primary page-header-create-btn" onClick={handleAddClick}>
+          <Plus size={16} /> New account
+        </button>
       </div>
 
       {error && <p className="form-error">{error}</p>}

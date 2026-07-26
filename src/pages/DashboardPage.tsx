@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
-import { Gauge, PieChart as PieChartIcon, TrendingUp } from "lucide-react";
+import { Gauge, PieChart as PieChartIcon, Plus, TrendingUp } from "lucide-react";
 import {
   getMonthCashSummary,
   listCategoryBudgetSummaries,
@@ -19,11 +19,12 @@ import { TrendChart } from "../components/TrendChart";
 
 interface DashboardPageProps {
   db: Database;
+  onQuickAdd: () => void;
 }
 
 const TREND_MONTHS = 6;
 
-export function DashboardPage({ db }: DashboardPageProps) {
+export function DashboardPage({ db, onQuickAdd }: DashboardPageProps) {
   const [month, setMonth] = useState(currentMonth());
   const [sweepRule, setSweepRule] = useState<SweepRule>("net");
   const [loading, setLoading] = useState(true);
@@ -59,9 +60,13 @@ export function DashboardPage({ db }: DashboardPageProps) {
 
   return (
     <>
-      <h1>Dashboard</h1>
-
-      <MonthNav month={month} onChange={setMonth} shift={shiftMonth} />
+      <div className="page-header-row">
+        <h1 className="sr-only">Dashboard</h1>
+        <MonthNav month={month} onChange={setMonth} shift={shiftMonth} />
+        <button type="button" className="btn-primary page-header-create-btn" onClick={onQuickAdd}>
+          <Plus size={16} /> Quick add
+        </button>
+      </div>
 
       {loading || !cash || !projected ? (
         <div className="dashboard-card">

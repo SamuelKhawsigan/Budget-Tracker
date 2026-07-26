@@ -19,6 +19,12 @@ import "@fontsource/ibm-plex-mono/500.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { applyCachedThemeEarly } from "./lib/themes";
+
+// Runs before the first paint so the splash screen (and everything behind
+// it) never flashes the wrong theme's colors while waiting for the DB
+// connection ThemeProvider itself depends on.
+applyCachedThemeEarly();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

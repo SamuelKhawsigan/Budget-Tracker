@@ -9,10 +9,11 @@ import {
 import type Database from "@tauri-apps/plugin-sql";
 import { getSetting, setSetting } from "../db/settings";
 import {
-  CSS_VAR_NAMES,
   DEFAULT_DARK_THEME,
   DEFAULT_LIGHT_THEME,
+  THEME_CACHE_KEY,
   THEMES,
+  applyThemeVars,
   isThemeName,
   type ThemeColors,
   type ThemeName,
@@ -34,18 +35,6 @@ function isFontPresetName(value: string | null): value is FontPresetName {
 
 function systemPrefersDark(): boolean {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
-function applyTheme(name: ThemeName, colors: ThemeColors) {
-  const root = document.documentElement;
-  for (const key of Object.keys(colors) as (keyof ThemeColors)[]) {
-    root.style.setProperty(CSS_VAR_NAMES[key], colors[key]);
-  }
-  // data-theme drives per-theme swatch card previews elsewhere; data-theme-mode
-  // drives binary light/dark CSS forks that can't use CSS variables, like the
-  // select-arrow SVG data-URI (url() can't reference custom properties).
-  root.dataset.theme = name;
-  root.dataset.themeMode = THEMES[name].mode;
 }
 
 function applyFontPreset(preset: FontPreset) {
@@ -95,8 +84,8 @@ export function ThemeProvider({ db, children }: { db: Database; children: ReactN
   const fontPreset = FONT_PRESETS[fontPresetName];
 
   useEffect(() => {
-    applyTheme(resolvedTheme, colors);
-  }, [resolvedTheme, colors]);
+    applyThemeVars(resolvedTheme);
+  }, [resolvedTheme]);
 
   useEffect(() => {
     applyFontPreset(fontPreset);
@@ -104,6 +93,7 @@ export function ThemeProvider({ db, children }: { db: Database; children: ReactN
 
   function setPreference(next: ThemePreference) {
     setPreferenceState(next);
+    localStorage.setItem(THEME_CACHE_KEY, next);
     void setSetting(db, THEME_SETTING_KEY, next);
   }
 

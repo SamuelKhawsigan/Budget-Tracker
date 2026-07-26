@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type Database from "@tauri-apps/plugin-sql";
+import { Plus } from "lucide-react";
 import { listAccounts, type AccountWithBalance } from "../db/accounts";
 import { getSetting, setSetting } from "../db/settings";
 import {
@@ -146,10 +147,16 @@ export function SavingsPage({ db }: SavingsPageProps) {
 
   const savingsAccount = accounts.find((a) => a.id === savingsAccountId) ?? null;
 
+  let closeMonthDisabledReason: string | null = null;
+  if (savingsAccountId === "") closeMonthDisabledReason = "Choose a savings account first";
+  else if (sourceAccountId === "") closeMonthDisabledReason = "Choose a source account";
+  else if (existingSweep) closeMonthDisabledReason = "Already swept for this month";
+  else if (!projected || projected.swept <= 0) closeMonthDisabledReason = "Nothing to sweep this month";
+
   return (
     <>
       <div className="page-header-row savings-page-header">
-        <h1>Savings</h1>
+        <h1 className="sr-only">Savings</h1>
         <SavingsSettingsPills
           accounts={accounts}
           savingsAccount={savingsAccount}
@@ -157,6 +164,15 @@ export function SavingsPage({ db }: SavingsPageProps) {
           onSelectAccount={(id) => void handleSelectSavingsAccount(id)}
           onSelectRule={(rule) => void handleSelectRule(rule)}
         />
+        <button
+          type="button"
+          className="btn-primary page-header-create-btn"
+          onClick={() => void handleCloseMonth()}
+          disabled={!!closeMonthDisabledReason}
+          title={closeMonthDisabledReason ?? undefined}
+        >
+          <Plus size={16} /> Close month &amp; sweep
+        </button>
       </div>
 
       {error && <p className="form-error">{error}</p>}
@@ -176,6 +192,7 @@ export function SavingsPage({ db }: SavingsPageProps) {
           onSourceAccountChange={setSourceAccountId}
           onCloseMonth={() => void handleCloseMonth()}
           onUndoRequest={handleUndoRequest}
+          disabledReason={closeMonthDisabledReason}
         />
 
         <SavingsHistoryCard sweeps={allSweeps} />

@@ -16,6 +16,7 @@ interface SavingsThisMonthCardProps {
   onSourceAccountChange: (id: number) => void;
   onCloseMonth: () => void;
   onUndoRequest: () => void;
+  disabledReason: string | null;
 }
 
 export function SavingsThisMonthCard({
@@ -29,15 +30,11 @@ export function SavingsThisMonthCard({
   onSourceAccountChange,
   onCloseMonth,
   onUndoRequest,
+  disabledReason,
 }: SavingsThisMonthCardProps) {
   const swept = projected?.swept ?? 0;
   const sweptDisplay = useCountUp(swept);
   const clamped = projected != null && projected.rawLeftover > projected.availableCash;
-
-  let disabledReason: string | null = null;
-  if (savingsAccountId === "") disabledReason = "Choose a savings account first";
-  else if (sourceAccountId === "") disabledReason = "Choose a source account";
-  else if (!projected || projected.swept <= 0) disabledReason = "Nothing to sweep this month";
 
   return (
     <div className="card savings-month-card">

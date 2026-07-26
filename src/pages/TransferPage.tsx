@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type Database from "@tauri-apps/plugin-sql";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { listAccounts, type AccountWithBalance } from "../db/accounts";
 import {
   createTransfer,
@@ -102,8 +102,12 @@ export function TransferPage({ db }: TransferPageProps) {
     setEditingId(null);
   }
 
-  async function handleSubmit(e: FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    void submitTransfer();
+  }
+
+  async function submitTransfer() {
     setError(null);
     setSuccess(null);
 
@@ -195,7 +199,18 @@ export function TransferPage({ db }: TransferPageProps) {
 
   return (
     <>
-      <h1>Transfer</h1>
+      <div className="page-header-row">
+        <h1 className="sr-only">Transfer</h1>
+        <button
+          type="button"
+          className="btn-primary page-header-create-btn"
+          onClick={() => void submitTransfer()}
+          disabled={!canSubmit}
+          title={submitDisabledReason ?? undefined}
+        >
+          <Plus size={16} /> {editingId != null ? "Save changes" : "Record transfer"}
+        </button>
+      </div>
 
       {error && <p className="form-error">{error}</p>}
       {success && <p className="form-success">{success}</p>}

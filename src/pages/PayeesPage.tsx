@@ -144,7 +144,7 @@ export function PayeesPage({ db, onSelectPayee }: PayeesPageProps) {
   return (
     <>
       <div className="page-header-row payee-page-header">
-        <h1>Payees</h1>
+        <h1 className="sr-only">Payees</h1>
         <input
           className="payee-search"
           value={search}
@@ -164,6 +164,13 @@ export function PayeesPage({ db, onSelectPayee }: PayeesPageProps) {
           />
           Show archived
         </label>
+        <button
+          type="button"
+          className="btn-primary page-header-create-btn"
+          onClick={(e) => openPopover({ mode: "add" }, e.currentTarget.getBoundingClientRect())}
+        >
+          <Plus size={16} /> New payee
+        </button>
       </div>
 
       {error && <p className="form-error">{error}</p>}
@@ -180,8 +187,15 @@ export function PayeesPage({ db, onSelectPayee }: PayeesPageProps) {
       )}
 
       {payees.length === 0 ? (
-        <div className="card">
+        <div className="card empty-state-card">
           <p className="empty-state">No payees yet — add one, or import a statement to create them automatically.</p>
+          <button
+            type="button"
+            className="btn-primary btn-icon-label"
+            onClick={(e) => openPopover({ mode: "add" }, e.currentTarget.getBoundingClientRect())}
+          >
+            <Plus size={16} /> New payee
+          </button>
         </div>
       ) : (
         <motion.div layout className="payee-grid">

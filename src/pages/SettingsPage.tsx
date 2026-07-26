@@ -134,7 +134,7 @@ export function SettingsPage({ db }: SettingsPageProps) {
 
   return (
     <>
-      <h1>Settings</h1>
+      <h1 className="sr-only">Settings</h1>
 
       {error && <p className="form-error">{error}</p>}
 

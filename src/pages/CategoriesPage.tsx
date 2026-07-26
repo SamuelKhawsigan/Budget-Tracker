@@ -205,7 +205,7 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
   return (
     <>
       <div className="page-header-row category-page-header">
-        <h1>Categories</h1>
+        <h1 className="sr-only">Categories</h1>
         <label className="show-archived">
           <input
             type="checkbox"
@@ -214,6 +214,13 @@ export function CategoriesPage({ db }: CategoriesPageProps) {
           />
           Show archived
         </label>
+        <button
+          type="button"
+          className="btn-primary page-header-create-btn"
+          onClick={(e) => openPopover({ mode: "add-group", kind: "expense" }, e.currentTarget.getBoundingClientRect())}
+        >
+          <Plus size={16} /> New group
+        </button>
       </div>
 
       {error && <p className="form-error">{error}</p>}

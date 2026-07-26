@@ -159,3 +159,41 @@ export const CSS_VAR_NAMES: Record<keyof ThemeColors, string> = {
   warning: "--warning",
   danger: "--danger",
 };
+
+// Applies a theme's colors directly to the document, plus the data-theme /
+// data-theme-mode attributes CSS can't reach via custom properties (e.g. the
+// select-arrow SVG). Shared by ThemeContext (the DB-backed source of truth)
+// and the synchronous localStorage-cache bootstrap below, so the two never
+// drift into applying the theme two different ways.
+export function applyThemeVars(name: ThemeName): void {
+  const root = document.documentElement;
+  const colors = THEMES[name].colors;
+  for (const key of Object.keys(colors) as (keyof ThemeColors)[]) {
+    root.style.setProperty(CSS_VAR_NAMES[key], colors[key]);
+  }
+  root.dataset.theme = name;
+  root.dataset.themeMode = THEMES[name].mode;
+}
+
+export const THEME_CACHE_KEY = "sweep-theme-preference";
+
+function systemPrefersDark(): boolean {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+// Resolves "system"/unset the same way ThemeContext does, so a preference
+// cached before the DB was reachable still picks the correct light/dark
+// default.
+export function resolveThemePreference(preference: string | null): ThemeName {
+  if (isThemeName(preference)) return preference;
+  return systemPrefersDark() ? DEFAULT_DARK_THEME : DEFAULT_LIGHT_THEME;
+}
+
+// Applies the last-known theme synchronously from localStorage, before the
+// DB has even connected — so the splash screen (and the first paint behind
+// it) never flashes the wrong theme's colors while ThemeProvider is still
+// waiting on its DB-backed settings query.
+export function applyCachedThemeEarly(): void {
+  const cached = localStorage.getItem(THEME_CACHE_KEY);
+  applyThemeVars(resolveThemePreference(cached));
+}

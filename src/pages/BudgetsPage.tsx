@@ -98,9 +98,25 @@ export function BudgetsPage({ db }: BudgetsPageProps) {
 
   return (
     <>
-      <h1>Budgets</h1>
-
-      <MonthNav month={month} onChange={setMonth} shift={shiftMonth} />
+      <div className="page-header-row">
+        <h1 className="sr-only">Budgets</h1>
+        <MonthNav month={month} onChange={setMonth} shift={shiftMonth} />
+        <button
+          type="button"
+          className="btn-primary page-header-create-btn"
+          onClick={(e) => setAddBudgetAnchor(e.currentTarget.getBoundingClientRect())}
+          disabled={unbudgetedOptions.length === 0}
+          title={
+            summaries.length === 0
+              ? "Add expense categories first"
+              : unbudgetedOptions.length === 0
+                ? "Every expense category already has a budget this month"
+                : undefined
+          }
+        >
+          <Plus size={16} /> New budget
+        </button>
+      </div>
 
       {error && <p className="form-error">{error}</p>}
 

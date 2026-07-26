@@ -7,10 +7,18 @@ let dbPromise: Promise<Database> | null = null;
 // database file), so it must be re-issued every time a connection opens.
 export function getDb(): Promise<Database> {
   if (!dbPromise) {
-    dbPromise = Database.load("sqlite:budget.db").then(async (db) => {
-      await db.execute("PRAGMA foreign_keys = ON;");
-      return db;
-    });
+    dbPromise = Database.load("sqlite:budget.db")
+      .then(async (db) => {
+        await db.execute("PRAGMA foreign_keys = ON;");
+        return db;
+      })
+      .catch((e) => {
+        // Clear the cached promise on failure so a later retry (e.g. from the
+        // splash screen's "Retry" button) attempts a fresh connection instead
+        // of just returning the same rejected promise forever.
+        dbPromise = null;
+        throw e;
+      });
   }
   return dbPromise;
 }
